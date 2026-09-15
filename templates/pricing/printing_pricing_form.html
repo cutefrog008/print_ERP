@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if is_edit %}Edit Printing Pricing{% else %}Add Printing Pricing{% endif %} - {{ client.name }} - Printing ERP{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2>{% if is_edit %}Edit Printing Pricing{% else %}Add Printing Pricing{% endif %} - {{ client.name }}</h2>
+        <a href="{% url 'printing_pricing_list' client.pk %}" class="btn btn-secondary btn-sm">Back to Printing Pricing</a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+            {% endif %}
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    {{ form.client.label_tag }}
+                    {{ form.client }}
+                    {% if form.client.errors %}<div class="text-danger small">{{ form.client.errors }}</div>{% endif %}
+                </div>
+                <div class="col-md-6 mb-3">
+                    {{ form.colors.label_tag }}
+                    {{ form.colors }}
+                    {% if form.colors.errors %}<div class="text-danger small">{{ form.colors.errors }}</div>{% endif %}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    {{ form.quantity_min.label_tag }}
+                    {{ form.quantity_min }}
+                    {% if form.quantity_min.errors %}<div class="text-danger small">{{ form.quantity_min.errors }}</div>{% endif %}
+                </div>
+                <div class="col-md-6 mb-3">
+                    {{ form.quantity_max.label_tag }}
+                    {{ form.quantity_max }}
+                    {% if form.quantity_max.errors %}<div class="text-danger small">{{ form.quantity_max.errors }}</div>{% endif %}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    {{ form.price.label_tag }}
+                    {{ form.price }}
+                    {% if form.price.errors %}<div class="text-danger small">{{ form.price.errors }}</div>{% endif %}
+                </div>
+                <div class="col-md-6 mb-3">
+                    {{ form.minimum_charge.label_tag }}
+                    {{ form.minimum_charge }}
+                    {% if form.minimum_charge.errors %}<div class="text-danger small">{{ form.minimum_charge.errors }}</div>{% endif %}
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary">Save</button>
+            <a href="{% url 'printing_pricing_list' client.pk %}" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

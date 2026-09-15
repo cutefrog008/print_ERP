@@ -1,0 +1,361 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Mengo Printers{% endblock %}
+
+{% block content %}
+<style>
+    .stat-card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        text-decoration: none;
+        display: block;
+        border: none;
+    }
+    .stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+    }
+    .stat-card .card-title {
+        font-size: 2.2rem;
+        font-weight: 700;
+        margin: 0;
+    }
+    .stat-card .card-text {
+        font-size: 0.95rem;
+        opacity: 0.95;
+        margin-top: 0.4rem;
+    }
+    .stat-card .stat-icon {
+        font-size: 2.5rem;
+        opacity: 0.9;
+    }
+    .action-btn {
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+        font-weight: 600;
+        padding: 1.25rem 1rem;
+    }
+    .action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+    }
+    .section-title {
+        font-weight: 600;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #e9ecef;
+    }
+    .date-badge {
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="mb-1">Dashboard</h2>
+        {% if today_date %}
+        <span class="badge bg-light text-dark date-badge">
+            {{ today_date|date:"l, j F Y" }}
+        </span>
+        {% endif %}
+    </div>
+    <div>
+        <span class="badge bg-{% if user.role == 'admin' %}danger{% elif user.role == 'manager' %}primary{% else %}info{% endif %} fs-6">
+            {{ user.get_role_display }}
+        </span>
+    </div>
+</div>
+
+{% if user.role == 'admin' %}
+<div class="mb-4">
+    <h5 class="section-title">📊 Today's Production Overview</h5>
+    <div class="row g-3">
+        <a href="{% url 'job_list' %}" class="stat-card col-md-4 col-sm-6">
+            <div class="card text-white bg-primary h-100">
+                <div class="card-body d-flex align-items-center justify-content-between">
+                    <div>
+                        <h5 class="card-title">{{ today_jobs }}</h5>
+                        <p class="card-text">Today's Jobs</p>
+                    </div>
+                    <div class="stat-icon">📋</div>
+                </div>
+            </div>
+        </a>
+        <a href="{% url 'job_list' %}" class="stat-card col-md-4 col-sm-6">
+            <div class="card text-white bg-success h-100">
+                <div class="card-body d-flex align-items-center justify-content-between">
+                    <div>
+                        <h5 class="card-title">{{ today_sheets }}</h5>
+                        <p class="card-text">Today's Sheets</p>
+                    </div>
+                    <div class="stat-icon">📄</div>
+                </div>
+            </div>
+        </a>
+        <a href="{% url 'client_list' %}" class="stat-card col-md-4 col-sm-6">
+            <div class="card text-white bg-info h-100">
+                <div class="card-body d-flex align-items-center justify-content-between">
+                    <div>
+                        <h5 class="card-title">{{ today_clients }}</h5>
+                        <p class="card-text">Active Clients</p>
+                    </div>
+                    <div class="stat-icon">👥</div>
+                </div>
+            </div>
+        </a>
+        <a href="{% url 'attendance_list' %}" class="stat-card col-md-4 col-sm-6">
+            <div class="card text-white bg-warning h-100">
+                <div class="card-body d-flex align-items-center justify-content-between">
+                    <div>
+                        <h5 class="card-title">{{ employees_present }}</h5>
+                        <p class="card-text">Employees Present</p>
+                    </div>
+                    <div class="stat-icon">✅</div>
+                </div>
+            </div>
+        </a>
+        <a href="{% url 'job_list' %}" class="stat-card col-md-4 col-sm-6">
+            <div class="card text-white bg-secondary h-100">
+                <div class="card-body d-flex align-items-center justify-content-between">
+                    <div>
+                        <h5 class="card-title">{{ pending_costing }}</h5>
+                        <p class="card-text">Awaiting Manual Costing</p>
+                    </div>
+                    <div class="stat-icon">💰</div>
+                </div>
+            </div>
+        </a>
+        <a href="{% url 'delivery_challan:challan_create' %}" class="stat-card col-md-4 col-sm-6">
+            <div class="card text-white" style="background: linear-gradient(135deg, #6610f2 0%, #0d6efd 100%);">
+                <div class="card-body d-flex align-items-center justify-content-between">
+                    <div>
+                        <h5 class="card-title">{{ ready_for_challan }}</h5>
+                        <p class="card-text">Ready for Challan</p>
+                    </div>
+                    <div class="stat-icon">📦</div>
+                </div>
+            </div>
+        </a>
+    </div>
+</div>
+
+<div class="mb-4">
+    <h5 class="section-title">🚚 Today's Delivery Challans</h5>
+    <div class="row g-3">
+        <a href="{% url 'delivery_challan:challan_list' %}" class="stat-card col-md-4 col-sm-6">
+            <div class="card text-white h-100" style="background:#4f46e5;">
+                <div class="card-body text-center">
+                    <div class="stat-icon mb-1">📝</div>
+                    <h5 class="card-title">{{ today_challans }}</h5>
+                    <p class="card-text">Today's Challans</p>
+                </div>
+            </div>
+        </a>
+        <a href="{% url 'delivery_challan:challan_list' %}?status=completed" class="stat-card col-md-4 col-sm-6">
+            <div class="card text-white bg-success h-100">
+                <div class="card-body text-center">
+                    <div class="stat-icon mb-1">✅</div>
+                    <h5 class="card-title">{{ dispatched_today }}</h5>
+                    <p class="card-text">Completed Today</p>
+                </div>
+            </div>
+        </a>
+        <a href="{% url 'delivery_challan:challan_list' %}?status=cancelled" class="stat-card col-md-4 col-sm-6">
+            <div class="card text-white bg-danger h-100">
+                <div class="card-body text-center">
+                    <div class="stat-icon mb-1">🚫</div>
+                    <h5 class="card-title">{{ cancelled_challans }}</h5>
+                    <p class="card-text">Cancelled (All)</p>
+                </div>
+            </div>
+        </a>
+    </div>
+</div>
+
+<div class="mb-4">
+    <h5 class="section-title">📈 Weekly Performance</h5>
+    <div class="card bg-light" style="border-left:4px solid #0d6efd;">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5 class="text-primary mb-0">{{ weekly_jobs }}</h5>
+                    <small class="text-muted">Jobs in Last 7 Days</small>
+                </div>
+                <div class="col-md-6 text-end">
+                    <h5 class="text-primary mb-0">{{ weekly_sheets }}</h5>
+                    <small class="text-muted">Sheets Printed This Week</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="mb-4">
+    <h5 class="section-title">⚡ Quick Actions</h5>
+    <div class="row g-3">
+        <div class="col-md-4 col-sm-6">
+            <a href="{% url 'client_create' %}" class="btn btn-primary btn-lg action-btn w-100">➕ New Client</a>
+        </div>
+        <div class="col-md-4 col-sm-6">
+            <a href="{% url 'employee_create' %}" class="btn btn-success btn-lg action-btn w-100">👤 New Employee</a>
+        </div>
+        <div class="col-md-4 col-sm-6">
+            <a href="{% url 'job_create' %}" class="btn btn-warning btn-lg action-btn w-100">📝 New Job</a>
+        </div>
+        <div class="col-md-4 col-sm-6">
+            <a href="{% url 'attendance_create' %}" class="btn btn-info btn-lg action-btn w-100">🕐 Mark Attendance</a>
+        </div>
+        <div class="col-md-4 col-sm-6">
+            <a href="{% url 'delivery_challan:challan_create' %}" class="btn btn-lg action-btn w-100 text-white" style="background: linear-gradient(135deg,#6610f2 0%, #0d6efd 100%);">
+                🚚 New Delivery Challan
+            </a>
+        </div>
+        <div class="col-md-4 col-sm-6">
+            <a href="{% url 'report_list' %}" class="btn btn-secondary btn-lg action-btn w-100">📊 View Reports</a>
+        </div>
+    </div>
+</div>
+
+{% elif user.role == 'manager' %}
+<div class="mb-4">
+    <h5 class="section-title">📊 Today's Overview</h5>
+    <div class="row g-3">
+        <a href="{% url 'attendance_list' %}" class="stat-card col-md-4 col-sm-6">
+            <div class="card text-white bg-primary h-100">
+                <div class="card-body d-flex align-items-center justify-content-between">
+                    <div>
+                        <h5 class="card-title">{{ today_attendance }}</h5>
+                        <p class="card-text">Attendance Marked</p>
+                    </div>
+                    <div class="stat-icon">🕐</div>
+                </div>
+            </div>
+        </a>
+        <a href="{% url 'job_list' %}" class="stat-card col-md-4 col-sm-6">
+            <div class="card text-white bg-success h-100">
+                <div class="card-body d-flex align-items-center justify-content-between">
+                    <div>
+                        <h5 class="card-title">{{ today_jobs }}</h5>
+                        <p class="card-text">Today's Jobs</p>
+                    </div>
+                    <div class="stat-icon">📋</div>
+                </div>
+            </div>
+        </a>
+        <a href="{% url 'employee_list' %}" class="stat-card col-md-4 col-sm-6">
+            <div class="card text-white bg-info h-100">
+                <div class="card-body d-flex align-items-center justify-content-between">
+                    <div>
+                        <h5 class="card-title">{{ employees_working }}</h5>
+                        <p class="card-text">Active Employees</p>
+                    </div>
+                    <div class="stat-icon">👥</div>
+                </div>
+            </div>
+        </a>
+        <a href="{% url 'job_list' %}" class="stat-card col-md-4 col-sm-6">
+            <div class="card text-white bg-secondary h-100">
+                <div class="card-body d-flex align-items-center justify-content-between">
+                    <div>
+                        <h5 class="card-title">{{ pending_costing }}</h5>
+                        <p class="card-text">Pending Costing</p>
+                    </div>
+                    <div class="stat-icon">💰</div>
+                </div>
+            </div>
+        </a>
+        <a href="{% url 'delivery_challan:challan_list' %}" class="stat-card col-md-4 col-sm-6">
+            <div class="card text-white h-100" style="background:#6610f2;">
+                <div class="card-body d-flex align-items-center justify-content-between">
+                    <div>
+                        <h5 class="card-title">{{ ready_for_challan }}</h5>
+                        <p class="card-text">Ready for Challan</p>
+                    </div>
+                    <div class="stat-icon">📦</div>
+                </div>
+            </div>
+        </a>
+        <a href="{% url 'delivery_challan:challan_list' %}" class="stat-card col-md-4 col-sm-6">
+            <div class="card text-white bg-warning text-dark h-100">
+                <div class="card-body d-flex align-items-center justify-content-between">
+                    <div>
+                        <h5 class="card-title">{{ today_challans|default:0 }}</h5>
+                        <p class="card-text">Challans (Completed Today: {{ dispatched_today|default:0 }})</p>
+                    </div>
+                    <div class="stat-icon">🚚</div>
+                </div>
+            </div>
+        </a>
+    </div>
+</div>
+
+<div class="mb-4">
+    <h5 class="section-title">⚡ Quick Actions</h5>
+    <div class="row g-3">
+        <div class="col-md-4 col-sm-6">
+            <a href="{% url 'job_create' %}" class="btn btn-primary btn-lg action-btn w-100">📝 Add New Job</a>
+        </div>
+        <div class="col-md-4 col-sm-6">
+            <a href="{% url 'attendance_create' %}" class="btn btn-success btn-lg action-btn w-100">🕐 Mark Attendance</a>
+        </div>
+        <div class="col-md-4 col-sm-6">
+            <a href="{% url 'job_list' %}" class="btn btn-info btn-lg action-btn w-100">📋 Today's Production</a>
+        </div>
+        <div class="col-md-4 col-sm-6">
+            <a href="{% url 'add_advance' %}" class="btn btn-warning btn-lg action-btn w-100">💰 Give Advance</a>
+        </div>
+        <div class="col-md-4 col-sm-6">
+            <a href="{% url 'delivery_challan:challan_list' %}" class="btn btn-lg action-btn w-100 text-white" style="background:#4f46e5;">
+                📦 View Challans
+            </a>
+        </div>
+        <div class="col-md-4 col-sm-6">
+            <a href="{% url 'report_list' %}" class="btn btn-secondary btn-lg action-btn w-100">📊 Reports</a>
+        </div>
+    </div>
+</div>
+
+{% elif user.role == 'employee' %}
+<div class="mb-4">
+    <h5 class="section-title">My Work Today</h5>
+    <div class="row g-3">
+        <a href="{% url 'job_list' %}" class="stat-card col-md-6 col-sm-12">
+            <div class="card text-white bg-primary h-100">
+                <div class="card-body d-flex align-items-center justify-content-between">
+                    <div>
+                        <h5 class="card-title">{{ today_jobs|default:0 }}</h5>
+                        <p class="card-text">Jobs Assigned Today</p>
+                    </div>
+                    <div class="stat-icon">📋</div>
+                </div>
+            </div>
+        </a>
+        <a href="{% url 'job_list' %}" class="stat-card col-md-6 col-sm-12">
+            <div class="card text-white bg-success h-100">
+                <div class="card-body d-flex align-items-center justify-content-between">
+                    <div>
+                        <h5 class="card-title">{{ today_sheets|default:0 }}</h5>
+                        <p class="card-text">Sheets to Print Today</p>
+                    </div>
+                    <div class="stat-icon">📄</div>
+                </div>
+            </div>
+        </a>
+    </div>
+</div>
+
+<div class="mb-4">
+    <h5 class="section-title">⚡ Quick Actions</h5>
+    <div class="row g-3">
+        <div class="col-md-6 mb-3">
+            <a href="{% url 'job_create' %}" class="btn btn-primary btn-lg action-btn w-100">📝 Add New Job</a>
+        </div>
+        <div class="col-md-6 mb-3">
+            <a href="{% url 'job_list' %}" class="btn btn-success btn-lg action-btn w-100">📋 My Today's Jobs</a>
+        </div>
+        <div class="col-md-6 mb-3">
+            <a href="{% url 'my_attendance' %}" class="btn btn-info btn-lg action-btn w-100">🕐 My Attendance</a>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

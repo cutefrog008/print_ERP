@@ -1,0 +1,199 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Print {{ challan.challan_number }} - Delivery Challan{% endblock %}
+
+{% block content %}
+<style>
+    body { background: #f3f4f6; }
+    @page { size: A4; margin: 14mm; }
+    .challan-page {
+        background: white;
+        padding: 28px 30px;
+        max-width: 210mm;
+        margin: 20px auto;
+        box-shadow: 0 4px 24px rgba(0,0,0,0.1);
+        color: #111;
+        font-family: 'Segoe UI', Helvetica, Arial, sans-serif;
+    }
+    .company-logo {
+        width: 100px; height: 100px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        overflow: hidden;
+        flex-shrink: 0;
+        border: 2px solid #fff;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    }
+    .company-logo img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+    .doc-title { font-weight: 800; font-size: 24px; letter-spacing: 1px; color: #0d6efd; }
+    .doc-sub { color: #555; font-size: 14px; }
+    .kv-label { font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 0.5px; }
+    .kv-value { font-size: 15px; font-weight: 600; color: #111; }
+    table.items th {
+        background: #f8f9fa;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #444;
+        border-bottom: 2px solid #dee2e6;
+    }
+    table.items td { font-size: 13px; vertical-align: top; }
+    .sign-box {
+        border-top: 1px dashed #999;
+        padding-top: 10px;
+        margin-top: 60px;
+        text-align: center;
+        font-size: 12px;
+        color: #555;
+    }
+    .print-toolbar {
+        position: sticky; top: 60px; z-index: 50;
+        background: #111827; color: white;
+        padding: 12px 20px; border-radius: 10px;
+        display: flex; justify-content: space-between; align-items: center;
+        max-width: 210mm; margin: 10px auto;
+    }
+    @media print {
+        body { background: white; }
+        .print-toolbar, nav, .no-print { display: none !important; }
+        .challan-page { box-shadow: none; margin: 0; padding: 8mm; }
+    }
+</style>
+
+<div class="print-toolbar no-print">
+    <div>
+        <strong>{{ challan.challan_number }}</strong>
+        <span class="text-warning ms-2">{{ challan.get_status_display }}</span>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'delivery_challan:challan_detail' challan.pk %}" class="btn btn-outline-light btn-sm">← Back</a>
+        <button class="btn btn-warning btn-sm" onclick="window.print()">Print</button>
+        <button class="btn btn-info btn-sm" onclick="window.print()">Export PDF</button>
+    </div>
+</div>
+
+<div class="challan-page" id="challanPrint">
+    <div class="d-flex justify-content-between align-items-start pb-4 border-bottom mb-4">
+        <div class="d-flex gap-3 align-items-center">
+            <div class="company-logo">
+                <img src="{% static 'logo.png' %}" alt="Mengo Printers Logo">
+            </div>
+            <div>
+                <div style="font-weight:800; font-size:22px; letter-spacing: 0.5px;">MENGO PRINTERS</div>
+                <div style="font-size:13px; color:#555;">
+                    Office Address: 19 Partap Road, Backside Laxmi Cinema, Jalandhar City, Punjab, India - 144001<br>
+                    GSTIN: 24ABCDE1234F1Z5 &nbsp; | &nbsp; Phone: +91 9876151921 , 7087079290 &nbsp;  &nbsp; Email: mengoprinters@gmail.com
+                </div>
+            </div>
+        </div>
+        <div class="text-end">
+            <div class="doc-title">DELIVERY CHALLAN</div>
+            <div class="doc-sub">
+                <strong>Challan #:</strong> {{ challan.challan_number }}<br>
+                <strong>Date:</strong> {{ challan.challan_date|date:"d / m / Y" }}
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div style="border:1px solid #e5e7eb; border-radius:8px; padding:14px 16px; height:100%; background:#fafafa;">
+                <div class="kv-label mb-1">Client</div>
+                {% if challan.client.company %}
+                <div class="kv-value mb-2">{{ challan.client.company }}</div>{% endif %}
+                {% if challan.client.gst_number %}
+                <div class="small text-muted">GST: {{ challan.client.gst_number }}</div>{% endif %}
+                <div class="small">{{ challan.client.mobile_number }}</div>
+                {% if challan.client.address %}
+                <div class="small text-muted mt-2">{{ challan.client.address }}, {{ challan.client.city|default:"" }} {{ challan.client.pincode|default:"" }}</div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div style="border:1px solid #e5e7eb; border-radius:8px; padding:14px 16px; height:100%;">
+                <div class="kv-label mb-1">Client Details</div>
+                <div class="kv-value">
+                    <div>Mobile: {{ challan.client.mobile_number|default:"-" }}</div>
+                    {% if challan.client.contact_person %}
+                    <div>Contact: {{ challan.client.contact_person }}</div>
+                    {% endif %}
+                </div>
+                {% if challan.remarks %}
+                <div class="mt-2">
+                    <span class="kv-label d-block">Remarks</span>
+                    <span class="kv-value" style="white-space: pre-wrap;">{{ challan.remarks }}</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <table class="table items mb-4">
+        <thead>
+            <tr>
+                <th style="width:36px;">#</th>
+                <th>Job #</th>
+                <th>Job Name</th>
+                <th>Paper</th>
+                <th>GSM</th>
+                <th>Type</th>
+                <th>Color</th>
+                <th>Print</th>
+                <th class="text-end">Qty (Sheets)</th>
+                <th class="text-end">Total Printing</th>
+                <th class="text-end">Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td class="fw-semibold">{{ item.job_number }}</td>
+                <td>{{ item.job_name }}</td>
+                <td>{{ item.paper_size }}</td>
+                <td>{{ item.paper_gsm }}</td>
+                <td>{{ item.paper_type }}</td>
+                <td>{{ item.printing_color_display }}</td>
+                <td>{{ item.printing_type }}</td>
+                <td class="text-end fw-semibold">{{ item.quantity }}</td>
+                <td class="text-end fw-semibold">{{ item.total_sheets }}</td>
+                <td class="text-end fw-bold">₹{{ item.manual_cost|floatformat:2 }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr style="background:#f0f9ff;">
+                <td colspan="8" class="text-end fw-bold">TOTALS →</td>
+                <td class="text-end fw-bold"></td>
+                <td class="text-end fw-bold"></td>
+                <td class="text-end fw-bold" style="font-size:16px;">₹{{ challan.total_cost }}</td>
+            </tr>
+        </tfoot>
+    </table>
+
+    <div class="row mt-5">
+        <div class="col-md-4">
+           
+        </div>
+        <div class="col-md-4"></div>
+        <div class="col-md-4">
+            <div class="sign-box">
+                <strong>For MENGO PRINTERS</strong><br>
+                Authorised Signatory<br>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-center mt-5 text-muted" style="font-size:11px; border-top:1px dashed #ddd; padding-top:10px; margin-top:20px;">
+        This is a computer-generated Delivery Challan and does not require physical signature.
+        Please report any discrepancies within 24 hours of receipt.
+        Status: <strong>{{ challan.get_status_display|upper }}</strong> | Created by: {{ challan.created_by.get_full_name|default:challan.created_by.username }}
+        on {{ challan.created_at|date:"d/m/Y" }}
+    </div>
+</div>
+{% endblock %}

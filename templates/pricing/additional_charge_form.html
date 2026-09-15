@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if is_edit %}Edit Additional Charge{% else %}Add Additional Charge{% endif %} - {{ client.name }} - Printing ERP{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2>{% if is_edit %}Edit Additional Charge{% else %}Add Additional Charge{% endif %} - {{ client.name }}</h2>
+        <a href="{% url 'pricing:additional_charges_list' client.pk %}" class="btn btn-secondary btn-sm">Back to Additional Charges</a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+            {% endif %}
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    {{ form.client.label_tag }}
+                    {{ form.client }}
+                    {% if form.client.errors %}<div class="text-danger small">{{ form.client.errors }}</div>{% endif %}
+                </div>
+                <div class="col-md-6 mb-3">
+                    {{ form.name.label_tag }}
+                    {{ form.name }}
+                    {% if form.name.errors %}<div class="text-danger small">{{ form.name.errors }}</div>{% endif %}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    {{ form.name_custom.label_tag }}
+                    {{ form.name_custom }}
+                    {% if form.name_custom.errors %}<div class="text-danger small">{{ form.name_custom.errors }}</div>{% endif %}
+                </div>
+                <div class="col-md-6 mb-3">
+                    {{ form.charge_type.label_tag }}
+                    {{ form.charge_type }}
+                    {% if form.charge_type.errors %}<div class="text-danger small">{{ form.charge_type.errors }}</div>{% endif %}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    {{ form.amount.label_tag }}
+                    {{ form.amount }}
+                    {% if form.amount.errors %}<div class="text-danger small">{{ form.amount.errors }}</div>{% endif %}
+                </div>
+                <div class="col-md-6 mb-3">
+                    {{ form.is_active.label_tag }}
+                    {{ form.is_active }}
+                    {% if form.is_active.errors %}<div class="text-danger small">{{ form.is_active.errors }}</div>{% endif %}
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary">Save</button>
+            <a href="{% url 'pricing:additional_charges_list' client.pk %}" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

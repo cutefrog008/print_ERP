@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block title %}Employee Productivity Report - Printing ERP{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2>Employee Productivity Report</h2>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Employee</th>
+                        <th>Total Jobs</th>
+                        <th>Total Sheets</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for data in employee_data %}
+                    <tr>
+                        <td>{{ data.employee.user.get_full_name }}</td>
+                        <td>{{ data.total_jobs }}</td>
+                        <td>{{ data.total_sheets }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" class="text-center">No data found</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

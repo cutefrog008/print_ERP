@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete Employee - Printing ERP{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2>Delete Employee</h2>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <p class="mb-4">Are you sure you want to delete employee <strong>{{ employee.user.get_full_name }} ({{ employee.user.username }})</strong>?</p>
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">Confirm Delete</button>
+            <a href="{% url 'employee_list' %}" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

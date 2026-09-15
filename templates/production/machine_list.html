@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block title %}Machines - Printing ERP{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2>Machines</h2>
+    </div>
+    <div class="col text-end">
+        <a href="{% url 'machine_create' %}" class="btn btn-primary">Add Machine</a>
+        <a href="{% url 'job_list' %}" class="btn btn-secondary">Back to Jobs</a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for machine in machines %}
+                    <tr>
+                        <td>{{ machine.name }}</td>
+                        <td><span class="badge bg-{% if machine.status == 'running' %}success{% elif machine.status == 'idle' %}warning{% else %}danger{% endif %}">{{ machine.get_status_display }}</span></td>
+                        <td>
+                            <a href="{% url 'machine_update' machine.pk %}" class="btn btn-sm btn-warning">Edit</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" class="text-center">No machines found</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

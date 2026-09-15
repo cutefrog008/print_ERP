@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+
+{% block title %}Add Jobs to {{ challan.challan_number }}{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="{% url 'delivery_challan:challan_edit' challan.pk %}" class="btn btn-sm btn-outline-secondary mb-2">← Back to Edit</a>
+    <h2>Add Jobs to {{ challan.challan_number }}</h2>
+    <p class="text-muted mb-0">Client: <strong>{{ challan.client.name }}</strong></p>
+</div>
+
+{% if not eligible_jobs %}
+<div class="alert alert-info">
+    <h5>✅ No additional jobs available</h5>
+    <p class="mb-0">All eligible jobs for this client are already in a challan or need costing.</p>
+    <a href="{% url 'delivery_challan:challan_edit' challan.pk %}" class="btn btn-sm btn-primary mt-2">← Return</a>
+</div>
+{% else %}
+
+<form method="post">
+    {% csrf_token %}
+    <div class="card mb-4">
+        <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Select Jobs to Add</h5>
+            <label class="mb-0 me-2">
+                <input type="checkbox" id="selectAll" class="form-check-input">
+                <span id="selectAllLabel">Select All</span>
+            </label>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width:40px;"></th>
+                            <th>Job #</th>
+                            <th>Job Name</th>
+                            <th>Date</th>
+                            <th>Paper</th>
+                            <th>GSM</th>
+                            <th class="text-end">Qty</th>
+                            <th>Color</th>
+                            <th>Operator</th>
+                            <th class="text-end">Cost</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for j in eligible_jobs %}
+                        <tr>
+                            <td><input type="checkbox" name="selected_jobs" value="{{ j.id }}"
+                                     class="form-check-input job-check"></td>
+                            <td class="fw-semibold">{{ j.job_number }}</td>
+                            <td>{{ j.job_name }}</td>
+                            <td>{{ j.date|date:"d/m/Y" }}</td>
+                            <td>{{ j.paper_size }}</td>
+                            <td>{{ j.paper_gsm }}</td>
+                            <td class="text-end fw-semibold">{{ j.number_of_sheets }}</td>
+                            <td>{{ j.printing_colors }} Color{{ j.printing_colors|pluralize }}</td>
+                            <td>
+                                {% if j.operator and j.operator.user %}
+                                {{ j.operator.user.first_name }} {{ j.operator.user.last_name }}
+                                {% else %}-{% endif %}
+                            </td>
+                            <td class="text-end">
+                                {% if j.costing %}₹{{ j.costing.grand_total|floatformat:2 }}
+                                {% else %}<span class="text-danger">No Costing</span>{% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="d-flex justify-content-between sticky-bottom bg-white py-3 border-top">
+        <a href="{% url 'delivery_challan:challan_edit' challan.pk %}" class="btn btn-secondary">Cancel</a>
+        <button type="submit" class="btn btn-success btn-lg px-5">Add Selected Jobs</button>
+    </div>
+</form>
+
+<script>
+document.getElementById('selectAll').addEventListener('change', function (e) {
+    const checks = document.querySelectorAll('.job-check');
+    checks.forEach(c => c.checked = e.target.checked);
+    document.getElementById('selectAllLabel').textContent = e.target.checked ? 'Deselect All' : 'Select All';
+});
+</script>
+{% endif %}
+{% endblock %}

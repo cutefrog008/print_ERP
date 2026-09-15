@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if item %}Edit Item{% else %}Add Item{% endif %} - Printing ERP{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2>{% if item %}Edit Item{% else %}Add Item{% endif %}</h2>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+            {% endif %}
+            <div class="mb-3">
+                {{ form.description.label_tag }}
+                {{ form.description }}
+                {% if form.description.errors %}<div class="text-danger small">{{ form.description.errors }}</div>{% endif %}
+            </div>
+            <div class="mb-3">
+                {{ form.quantity.label_tag }}
+                {{ form.quantity }}
+                {% if form.quantity.errors %}<div class="text-danger small">{{ form.quantity.errors }}</div>{% endif %}
+            </div>
+            <div class="mb-3">
+                {{ form.rate.label_tag }}
+                {{ form.rate }}
+                {% if form.rate.errors %}<div class="text-danger small">{{ form.rate.errors }}</div>{% endif %}
+            </div>
+            <button type="submit" class="btn btn-primary">{% if item %}Update Item{% else %}Add Item{% endif %}</button>
+            <a href="{% url 'invoice_detail' invoice.pk %}" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete Job - {{ job.job_name }} - Printing ERP{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2>Delete Job - {{ job.job_name }}</h2>
+        <a href="{% url 'job_detail' job.pk %}" class="btn btn-secondary btn-sm">Back to Job</a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="alert alert-danger">
+            <h5 class="alert-heading">Warning!</h5>
+            <p>You are about to delete this job. This action will also delete:</p>
+            <ul>
+                <li>All costing data for this job</li>
+                <li>All additional charges for this job</li>
+                <li>All audit logs for this job</li>
+            </ul>
+            <p><strong>This action cannot be undone.</strong></p>
+        </div>
+        
+        <p>Are you sure you want to delete <strong>{{ job.job_name }}</strong> for <strong>{{ job.client.name }}</strong>?</p>
+        
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">Yes, Delete Job</button>
+            <a href="{% url 'job_detail' job.pk %}" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

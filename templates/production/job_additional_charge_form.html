@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block title %}Add Additional Charge - {{ job.job_name }} - Printing ERP{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2>Add Additional Charge - {{ job.job_name }}</h2>
+        <a href="{% url 'job_costing_update' job.pk %}" class="btn btn-secondary btn-sm">Back to Costing</a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+            {% endif %}
+            <div class="mb-3">
+                {{ form.label.label_tag }}
+                {{ form.label }}
+                {% if form.label.errors %}<div class="text-danger small">{{ form.label.errors }}</div>{% endif %}
+            </div>
+            <div class="mb-3">
+                {{ form.amount.label_tag }}
+                {{ form.amount }}
+                {% if form.amount.errors %}<div class="text-danger small">{{ form.amount.errors }}</div>{% endif %}
+            </div>
+            <button type="submit" class="btn btn-primary">Add Charge</button>
+            <a href="{% url 'job_costing_update' job.pk %}" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

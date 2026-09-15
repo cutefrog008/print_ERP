@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% load duration_filters %}
+
+{% block title %}My Attendance - Printing ERP{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2>My Attendance</h2>
+    </div>
+    <div class="col text-end">
+        <form method="get" class="d-inline-flex gap-2">
+            <select name="month" class="form-select">
+                {% for option in month_options %}
+                <option value="{{ option.month }}" {% if selected_month == option.month and selected_year == option.year %}selected{% endif %}>
+                    {{ option.label }}
+                </option>
+                {% endfor %}
+            </select>
+            <select name="year" class="form-select">
+                {% for option in month_options %}
+                <option value="{{ option.year }}" {% if selected_year == option.year %}selected{% endif %}>
+                    {{ option.year }}
+                </option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn btn-outline-primary">Filter</button>
+            <a href="{% url 'my_attendance' %}" class="btn btn-outline-secondary">Reset</a>
+        </form>
+    </div>
+</div>
+
+<div class="alert alert-info" role="alert">
+    <strong>Showing attendance for:</strong> {{ start_date|date:"F Y" }} ({{ start_date }} to {{ end_date }})
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>In Time</th>
+                        <th>Out Time</th>
+                        <th>Total Time</th>
+                        <th>Overtime</th>
+                        <th>Status</th>
+                        <th>Remarks</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for attendance in attendances %}
+                    <tr>
+                        <td>{{ attendance.date }}</td>
+                        <td>{{ attendance.in_time|default:"-" }}</td>
+                        <td>{{ attendance.out_time|default:"-" }}</td>
+                        <td>{{ attendance.total_time|duration_to_hours_label }}</td>
+                        <td>{{ attendance.overtime|duration_to_hours_label }}</td>
+                        <td><span class="badge bg-{% if attendance.status == 'present' %}success{% elif attendance.status == 'absent' %}danger{% elif attendance.status == 'half_day' %}warning{% elif attendance.status == 'leave' %}info{% else %}secondary{% endif %}">{{ attendance.get_status_display }}</span></td>
+                        <td>{{ attendance.remarks|default:"-" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center">No attendance records found</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block title %}Restore Client - {{ client.name }} - Printing ERP{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2>Restore Client - {{ client.name }}</h2>
+        <a href="{% url 'client_detail' client.pk %}" class="btn btn-secondary btn-sm">Back to Client</a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="alert alert-success">
+            <h5 class="alert-heading">Restore Client</h5>
+            <p>You are about to restore this archived client.</p>
+            <p><strong>After restoration:</strong></p>
+            <ul>
+                <li>The client will appear in the active client list</li>
+                <li>The client can be used for new jobs</li>
+                <li>All previous production history will be available</li>
+            </ul>
+        </div>
+        
+        <p>Are you sure you want to restore <strong>{{ client.name }}</strong>?</p>
+        
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-success">Restore Client</button>
+            <a href="{% url 'client_detail' client.pk %}" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Transaction - Printing ERP{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2>Edit Transaction</h2>
+    </div>
+    <div class="col text-end">
+        <a href="{% url 'employee_advance_detail' transaction.employee.id %}" class="btn btn-secondary">Back to Ledger</a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="alert alert-info">
+            <strong>Transaction Type:</strong> {{ transaction.get_transaction_type_display }}<br>
+            <strong>Employee:</strong> {{ transaction.employee.user.get_full_name }}
+        </div>
+        
+        <form method="post">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+            {% endif %}
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    {{ form.amount.label_tag }}
+                    {{ form.amount }}
+                    {% if form.amount.errors %}<div class="text-danger small">{{ form.amount.errors }}</div>{% endif %}
+                </div>
+                <div class="col-md-6 mb-3">
+                    {{ form.transaction_date.label_tag }}
+                    {{ form.transaction_date }}
+                    {% if form.transaction_date.errors %}<div class="text-danger small">{{ form.transaction_date.errors }}</div>{% endif %}
+                </div>
+            </div>
+            <div class="mb-3">
+                {{ form.remarks.label_tag }}
+                {{ form.remarks }}
+                {% if form.remarks.errors %}<div class="text-danger small">{{ form.remarks.errors }}</div>{% endif %}
+            </div>
+            <button type="submit" class="btn btn-primary">Update Transaction</button>
+            <a href="{% url 'employee_advance_detail' transaction.employee.id %}" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

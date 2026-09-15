@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if is_edit %}Edit Paper Pricing{% else %}Add Paper Pricing{% endif %} - {{ client.name }} - Printing ERP{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2>{% if is_edit %}Edit Paper Pricing{% else %}Add Paper Pricing{% endif %} - {{ client.name }}</h2>
+        <a href="{% url 'paper_pricing_list' client.pk %}" class="btn btn-secondary btn-sm">Back to Paper Pricing</a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+            {% endif %}
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    {{ form.client.label_tag }}
+                    {{ form.client }}
+                    {% if form.client.errors %}<div class="text-danger small">{{ form.client.errors }}</div>{% endif %}
+                </div>
+                <div class="col-md-6 mb-3">
+                    {{ form.paper_size.label_tag }}
+                    {{ form.paper_size }}
+                    {% if form.paper_size.errors %}<div class="text-danger small">{{ form.paper_size.errors }}</div>{% endif %}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    {{ form.paper_size_custom.label_tag }}
+                    {{ form.paper_size_custom }}
+                    {% if form.paper_size_custom.errors %}<div class="text-danger small">{{ form.paper_size_custom.errors }}</div>{% endif %}
+                </div>
+                <div class="col-md-6 mb-3">
+                    {{ form.paper_gsm.label_tag }}
+                    {{ form.paper_gsm }}
+                    {% if form.paper_gsm.errors %}<div class="text-danger small">{{ form.paper_gsm.errors }}</div>{% endif %}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    {{ form.paper_gsm_custom.label_tag }}
+                    {{ form.paper_gsm_custom }}
+                    {% if form.paper_gsm_custom.errors %}<div class="text-danger small">{{ form.paper_gsm_custom.errors }}</div>{% endif %}
+                </div>
+                <div class="col-md-6 mb-3">
+                    {{ form.paper_type.label_tag }}
+                    {{ form.paper_type }}
+                    {% if form.paper_type.errors %}<div class="text-danger small">{{ form.paper_type.errors }}</div>{% endif %}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    {{ form.paper_type_custom.label_tag }}
+                    {{ form.paper_type_custom }}
+                    {% if form.paper_type_custom.errors %}<div class="text-danger small">{{ form.paper_type_custom.errors }}</div>{% endif %}
+                </div>
+                <div class="col-md-6 mb-3">
+                    {{ form.quantity_min.label_tag }}
+                    {{ form.quantity_min }}
+                    {% if form.quantity_min.errors %}<div class="text-danger small">{{ form.quantity_min.errors }}</div>{% endif %}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    {{ form.quantity_max.label_tag }}
+                    {{ form.quantity_max }}
+                    {% if form.quantity_max.errors %}<div class="text-danger small">{{ form.quantity_max.errors }}</div>{% endif %}
+                </div>
+                <div class="col-md-6 mb-3">
+                    {{ form.price_per_sheet.label_tag }}
+                    {{ form.price_per_sheet }}
+                    {% if form.price_per_sheet.errors %}<div class="text-danger small">{{ form.price_per_sheet.errors }}</div>{% endif %}
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary">Save</button>
+            <a href="{% url 'paper_pricing_list' client.pk %}" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

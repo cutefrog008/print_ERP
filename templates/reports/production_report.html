@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+
+{% block title %}Production Report - Printing ERP{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2>Production Report</h2>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Start Date</label>
+                <input type="date" name="start_date" value="{{ start_date }}" class="form-control">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">End Date</label>
+                <input type="date" name="end_date" value="{{ end_date }}" class="form-control">
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary">Generate Report</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title">Summary</h5>
+        <p>Total Sheets: <strong>{{ total_sheets }}</strong></p>
+        <p>Total Jobs: <strong>{{ jobs.count }}</strong></p>
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Client</th>
+                        <th>Job Name</th>
+                        <th>Sheets</th>
+                        <th>Colors</th>
+                        <th>Machine</th>
+                        <th>Operator</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for job in jobs %}
+                    <tr>
+                        <td>{{ job.date }}</td>
+                        <td>{{ job.client.name }}</td>
+                        <td>{{ job.job_name }}</td>
+                        <td>{{ job.number_of_sheets }}</td>
+                        <td>{{ job.get_printing_colors_display }}</td>
+                        <td>{{ job.machine.name }}</td>
+                        <td>{{ job.operator.user.get_full_name }}</td>
+                        <td><span class="badge bg-{% if job.status == 'completed' %}success{% elif job.status == 'in_progress' %}primary{% else %}secondary{% endif %}">{{ job.get_status_display }}</span></td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center">No jobs found for this date range</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

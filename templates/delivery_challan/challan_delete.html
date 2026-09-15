@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete {{ challan.challan_number }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">Delete Delivery Challan</h5>
+            </div>
+            <div class="card-body p-5">
+                <h3 class="text-danger mb-3">Are you sure you want to PERMANENTLY DELETE this challan?</h3>
+                <p class="lead mb-3">
+                    You are about to delete challan <strong>{{ challan.challan_number }}</strong>
+                    for <strong>{{ challan.client.name }}</strong> dated
+                    {{ challan.challan_date|date:"d/m/Y" }}.
+                </p>
+                <div class="alert alert-danger">
+                    <h6>⚠ Warning — This action cannot be undone:</h6>
+                    <ul class="mb-0">
+                        <li>All <strong>{{ items_count }} job(s)</strong> will be returned to <strong>Ready for Challan</strong></li>
+                        <li>All items, snapshots, and audit logs for this challan will be <strong>permanently erased</strong></li>
+                        <li>This challan will <strong>not</strong> appear in history — no recovery possible</li>
+                        <li>Use <strong>Cancel</strong> instead if you only want to mark it cancelled and preserve history</li>
+                    </ul>
+                </div>
+                <form method="post" class="mt-4">
+                    {% csrf_token %}
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{% url 'delivery_challan:challan_detail' challan.pk %}" class="btn btn-secondary px-4">
+                            ← Go Back
+                        </a>
+                        <button type="submit" class="btn btn-danger px-5"
+                                onclick="return confirm('Confirm PERMANENT DELETE? This cannot be undone.')">
+                            Yes, Permanently Delete
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

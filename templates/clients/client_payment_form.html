@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if is_edit %}Edit Payment{% else %}Add Payment{% endif %} - {{ client.name }} - Printing ERP{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2>{% if is_edit %}Edit Payment{% else %}Add Payment{% endif %} - {{ client.name }}</h2>
+        <a href="{% url 'client_detail' client.pk %}" class="btn btn-secondary btn-sm">Back to Client</a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+            {% endif %}
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    {{ form.client.label_tag }}
+                    {{ form.client }}
+                    {% if form.client.errors %}<div class="text-danger small">{{ form.client.errors }}</div>{% endif %}
+                </div>
+                <div class="col-md-6 mb-3">
+                    {{ form.amount.label_tag }}
+                    {{ form.amount }}
+                    {% if form.amount.errors %}<div class="text-danger small">{{ form.amount.errors }}</div>{% endif %}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    {{ form.payment_mode.label_tag }}
+                    {{ form.payment_mode }}
+                    {% if form.payment_mode.errors %}<div class="text-danger small">{{ form.payment_mode.errors }}</div>{% endif %}
+                </div>
+                <div class="col-md-6 mb-3">
+                    {{ form.payment_date.label_tag }}
+                    {{ form.payment_date }}
+                    {% if form.payment_date.errors %}<div class="text-danger small">{{ form.payment_date.errors }}</div>{% endif %}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    {{ form.reference_number.label_tag }}
+                    {{ form.reference_number }}
+                    {% if form.reference_number.errors %}<div class="text-danger small">{{ form.reference_number.errors }}</div>{% endif %}
+                </div>
+                <div class="col-md-12 mb-3">
+                    {{ form.notes.label_tag }}
+                    {{ form.notes }}
+                    {% if form.notes.errors %}<div class="text-danger small">{{ form.notes.errors }}</div>{% endif %}
+                </div>
+            </div>
+            <button type="submit" class="btn btn-success">Save Payment</button>
+            <a href="{% url 'client_detail' client.pk %}" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

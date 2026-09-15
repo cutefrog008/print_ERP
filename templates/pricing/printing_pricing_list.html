@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block title %}Printing Pricing - {{ client.name }} - Printing ERP{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2>Printing Pricing - {{ client.name }}</h2>
+        <a href="{% url 'pricing:client_pricing_config' client.pk %}" class="btn btn-secondary btn-sm">Back to Pricing Config</a>
+        <a href="{% url 'pricing:printing_pricing_create' client.pk %}" class="btn btn-primary btn-sm">Add Printing Pricing</a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if printing_pricing %}
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Colors</th>
+                    <th>Quantity Range</th>
+                    <th>Price</th>
+                    <th>Minimum Charge</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for pricing in printing_pricing %}
+                <tr>
+                    <td>{{ pricing.get_colors_display }}</td>
+                    <td>{{ pricing.quantity_min }}{% if pricing.quantity_max %} - {{ pricing.quantity_max }}{% else %}+{% endif %}</td>
+                    <td>₹{{ pricing.price }}</td>
+                    <td>₹{{ pricing.minimum_charge }}</td>
+                    <td>
+                        <a href="{% url 'pricing:printing_pricing_update' client.pk pricing.pk %}" class="btn btn-sm btn-outline-primary">Edit</a>
+                        <a href="{% url 'pricing:printing_pricing_delete' client.pk pricing.pk %}" class="btn btn-sm btn-outline-danger">Delete</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="text-muted">No printing pricing configured yet.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

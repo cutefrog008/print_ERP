@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block title %}Additional Charges - {{ client.name }} - Printing ERP{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2>Additional Charges - {{ client.name }}</h2>
+        <a href="{% url 'pricing:client_pricing_config' client.pk %}" class="btn btn-secondary btn-sm">Back to Pricing Config</a>
+        <a href="{% url 'pricing:additional_charge_create' client.pk %}" class="btn btn-primary btn-sm">Add Additional Charge</a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if additional_charges %}
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Charge Name</th>
+                    <th>Type</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for charge in additional_charges %}
+                <tr>
+                    <td>{{ charge.name_custom if charge.name == 'other' else charge.get_name_display }}</td>
+                    <td>{{ charge.get_charge_type_display }}</td>
+                    <td>₹{{ charge.amount }}</td>
+                    <td>
+                        {% if charge.is_active %}
+                        <span class="badge bg-success">Active</span>
+                        {% else %}
+                        <span class="badge bg-secondary">Inactive</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'pricing:additional_charge_update' client.pk charge.pk %}" class="btn btn-sm btn-outline-primary">Edit</a>
+                        <a href="{% url 'pricing:additional_charge_delete' client.pk charge.pk %}" class="btn btn-sm btn-outline-danger">Delete</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="text-muted">No additional charges configured yet.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

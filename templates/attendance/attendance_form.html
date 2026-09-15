@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block title %}Mark Attendance - Printing ERP{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2>Mark Attendance</h2>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    {{ form.employee.label_tag }}
+                    {{ form.employee }}
+                </div>
+                <div class="col-md-6 mb-3">
+                    {{ form.date.label_tag }}
+                    {{ form.date }}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    {{ form.in_time.label_tag }}
+                    {{ form.in_time }}
+                </div>
+                <div class="col-md-6 mb-3">
+                    {{ form.out_time.label_tag }}
+                    {{ form.out_time }}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    {{ form.time.label_tag }}
+                    {{ form.time }}
+                </div>
+                <div class="col-md-6 mb-3">
+                    {{ form.status.label_tag }}
+                    {{ form.status }}
+                </div>
+            </div>
+            <div class="mb-3">
+                {{ form.remarks.label_tag }}
+                {{ form.remarks }}
+            </div>
+            <button type="submit" class="btn btn-primary">Save</button>
+            <a href="{% url 'attendance_list' %}" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

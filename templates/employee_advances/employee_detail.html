@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% block title %}Advance History - {{ employee.user.get_full_name }} - Printing ERP{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2>Advance History - {{ employee.user.get_full_name }}</h2>
+    </div>
+    <div class="col text-end">
+        <a href="{% url 'advance_dashboard' %}" class="btn btn-secondary">Back to Dashboard</a>
+        <a href="{% url 'add_advance' %}" class="btn btn-primary">Add Advance</a>
+        <a href="{% url 'record_repayment' %}" class="btn btn-success">Record Repayment</a>
+    </div>
+</div>
+
+<!-- Summary -->
+<div class="alert alert-{% if pending > 0 %}warning{% else %}success{% endif %}" role="alert" style="font-size: 1.1em;">
+    <div class="row">
+        <div class="col-md-4">
+            <strong>Total Advance Taken:</strong> ₹{{ total_taken }}
+        </div>
+        <div class="col-md-4">
+            <strong>Total Returned:</strong> ₹{{ total_returned }}
+        </div>
+        <div class="col-md-4">
+            <strong style="color: {% if pending > 0 %}red{% else %}green{% endif %}; font-size: 1.2em;">Pending: ₹{{ pending }}</strong>
+        </div>
+    </div>
+</div>
+
+<!-- Transaction History -->
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title mb-4">Advance Transaction History</h5>
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Transaction</th>
+                        <th>Amount</th>
+                        <th>Balance After</th>
+                        <th>Remarks</th>
+                        <th>Added By</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in transactions %}
+                    <tr>
+                        <td>{{ item.transaction.transaction_date }}</td>
+                        <td>
+                            <span class="badge bg-{% if item.transaction.transaction_type == 'TAKEN' %}primary{% else %}success{% endif %}">
+                                {{ item.transaction.get_transaction_type_display }}
+                            </span>
+                        </td>
+                        <td>₹{{ item.transaction.amount }}</td>
+                        <td style="font-weight: bold;">₹{{ item.balance_after }}</td>
+                        <td>{{ item.transaction.remarks|default:"-" }}</td>
+                        <td>{{ item.transaction.created_by.get_full_name }}</td>
+                        <td>
+                            <a href="{% url 'edit_transaction' item.transaction.id %}" class="btn btn-sm btn-outline-primary">Edit</a>
+                            <a href="{% url 'delete_transaction' item.transaction.id %}" class="btn btn-sm btn-outline-danger">Delete</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center">No transactions found for this employee</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

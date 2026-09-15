@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block title %}Add Advance - Printing ERP{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2>Add Advance</h2>
+    </div>
+    <div class="col text-end">
+        <a href="{% url 'advance_dashboard' %}" class="btn btn-secondary">Back to Dashboard</a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+            {% endif %}
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    {{ form.employee.label_tag }}
+                    {{ form.employee }}
+                    {% if form.employee.errors %}<div class="text-danger small">{{ form.employee.errors }}</div>{% endif %}
+                </div>
+                <div class="col-md-6 mb-3">
+                    {{ form.amount.label_tag }}
+                    {{ form.amount }}
+                    {% if form.amount.errors %}<div class="text-danger small">{{ form.amount.errors }}</div>{% endif %}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    {{ form.transaction_date.label_tag }}
+                    {{ form.transaction_date }}
+                    {% if form.transaction_date.errors %}<div class="text-danger small">{{ form.transaction_date.errors }}</div>{% endif %}
+                </div>
+            </div>
+            <div class="mb-3">
+                {{ form.remarks.label_tag }}
+                {{ form.remarks }}
+                {% if form.remarks.errors %}<div class="text-danger small">{{ form.remarks.errors }}</div>{% endif %}
+            </div>
+            <button type="submit" class="btn btn-primary">Save Advance</button>
+            <a href="{% url 'advance_dashboard' %}" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

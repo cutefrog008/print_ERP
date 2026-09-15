@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+
+{% block title %}Pricing Configuration - {{ client.name }} - Printing ERP{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2>Pricing Configuration - {{ client.name }}</h2>
+        <a href="{% url 'clients:client_detail' client.pk %}" class="btn btn-secondary btn-sm">Back to Client</a>
+    </div>
+</div>
+
+{% if not pricing_status.complete %}
+<div class="alert alert-warning">
+    <strong>Pricing Incomplete:</strong> Please configure the following sections:
+    {% for missing in pricing_status.missing %}
+        {{ missing }}{% if not forloop.last %}, {% endif %}
+    {% endfor %}
+</div>
+{% else %}
+<div class="alert alert-success">
+    <strong>Pricing Complete:</strong> All pricing sections are configured for this client.
+</div>
+{% endif %}
+
+<div class="row">
+    <div class="col-md-3 mb-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5 class="card-title">Paper Pricing</h5>
+                <p class="card-text">{{ paper_pricing.count }} rules configured</p>
+                <a href="{% url 'pricing:paper_pricing_list' client.pk %}" class="btn btn-primary">Manage</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5 class="card-title">Printing Pricing</h5>
+                <p class="card-text">{{ printing_pricing.count }} rules configured</p>
+                <a href="{% url 'pricing:printing_pricing_list' client.pk %}" class="btn btn-primary">Manage</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5 class="card-title">Plate Pricing</h5>
+                <p class="card-text">{{ plate_pricing.count }} rules configured</p>
+                <a href="{% url 'pricing:plate_pricing_list' client.pk %}" class="btn btn-primary">Manage</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5 class="card-title">Additional Charges</h5>
+                <p class="card-text">{{ additional_charges.count }} charges configured</p>
+                <a href="{% url 'pricing:additional_charges_list' client.pk %}" class="btn btn-primary">Manage</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Pricing History</h5>
+                <a href="{% url 'pricing:pricing_history' client.pk %}" class="btn btn-outline-primary btn-sm">View Full History</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

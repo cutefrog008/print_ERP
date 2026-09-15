@@ -1,0 +1,192 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if is_edit %}Edit Job Costing{% else %}Add Job Costing{% endif %} - {{ job.job_name }} - Printing ERP{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2>{% if is_edit %}Edit Job Costing{% else %}Add Job Costing{% endif %} - {{ job.job_name }}</h2>
+        {% if client_pk %}
+        <a href="{% url 'client_detail' client_pk %}" class="btn btn-secondary btn-sm">Back to Client</a>
+        {% else %}
+        <a href="{% url 'job_detail' job.pk %}" class="btn btn-secondary btn-sm">Back to Job</a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Production Details</h5>
+                <table class="table table-sm">
+                    <tr><th>Client:</th><td>{{ job.client.name }}</td></tr>
+                    <tr><th>Job Name:</th><td>{{ job.job_name }}</td></tr>
+                    <tr><th>Paper Size:</th><td>{{ job.paper_size }}</td></tr>
+                    <tr><th>Paper GSM:</th><td>{{ job.paper_gsm }}</td></tr>
+                    <tr><th>Paper Type:</th><td>{{ job.paper_type }}</td></tr>
+                    <tr><th>Colors:</th><td>{{ job.get_printing_colors_display }}</td></tr>
+                    <tr><th>Sheets:</th><td>{{ job.number_of_sheets }} sheets</td></tr>
+                    <tr><th>Type:</th><td>{{ job.get_printing_type_display }}</td></tr>
+                    <tr style="background-color: #ffdddd;">
+                    <th style="color: red; font-weight: bold;">Total Quantity:</th>
+                    <td style="color: red; font-weight: bold;">{{ job.total_sheets }}</td>
+                    </tr>
+                    <tr><th>Operator:</th><td>{{ job.operator.user.get_full_name }}</td></tr>
+                    <tr><th>Date:</th><td>{{ job.date }}</td></tr>
+                    <tr><th>Time:</th><td>{{ job.time }}</td></tr>
+                    {% if job.remarks %}
+                    <tr><th>Remarks:</th><td>{{ job.remarks }}</td></tr>
+                    {% endif %}
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Job Costing</h5>
+                <form method="post">
+                    {% csrf_token %}
+                    {% if form.non_field_errors %}
+                    <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+                    {% endif %}
+                    <div class="mb-3">
+                        {{ form.paper_cost.label_tag }}
+                        {{ form.paper_cost }}
+                        {% if form.paper_cost.errors %}<div class="text-danger small">{{ form.paper_cost.errors }}</div>{% endif %}
+                    </div>
+                    <div class="mb-3">
+                        {{ form.printing_cost.label_tag }}
+                        {{ form.printing_cost }}
+                        {% if form.printing_cost.errors %}<div class="text-danger small">{{ form.printing_cost.errors }}</div>{% endif %}
+                    </div>
+                    <div class="mb-3">
+                        {{ form.plate_cost.label_tag }}
+                        {{ form.plate_cost }}
+                        {% if form.plate_cost.errors %}<div class="text-danger small">{{ form.plate_cost.errors }}</div>{% endif %}
+                    </div>
+                    <div class="mb-3">
+                        {{ form.die_charge.label_tag }}
+                        {{ form.die_charge }}
+                        {% if form.die_charge.errors %}<div class="text-danger small">{{ form.die_charge.errors }}</div>{% endif %}
+                    </div>
+                    <div class="mb-3">
+                        {{ form.lamination_charge.label_tag }}
+                        {{ form.lamination_charge }}
+                        {% if form.lamination_charge.errors %}<div class="text-danger small">{{ form.lamination_charge.errors }}</div>{% endif %}
+                    </div>
+                    <div class="mb-3">
+                        {{ form.packing_charge.label_tag }}
+                        {{ form.packing_charge }}
+                        {% if form.packing_charge.errors %}<div class="text-danger small">{{ form.packing_charge.errors }}</div>{% endif %}
+                    </div>
+                    <div class="mb-3">
+                        {{ form.transport_charge.label_tag }}
+                        {{ form.transport_charge }}
+                        {% if form.transport_charge.errors %}<div class="text-danger small">{{ form.transport_charge.errors }}</div>{% endif %}
+                    </div>
+                    <div class="mb-3">
+                        {{ form.remarks.label_tag }}
+                        {{ form.remarks }}
+                        {% if form.remarks.errors %}<div class="text-danger small">{{ form.remarks.errors }}</div>{% endif %}
+                    </div>
+                    
+                    <h6 class="mt-4 mb-3">Other Charges</h6>
+                    <div id="charges-formset">
+                        {{ formset.management_form }}
+                        {% for form in formset %}
+                        <div class="row mb-2 charge-row">
+                            <div class="col-md-5">
+                                {{ form.label }}
+                                {% if form.label.errors %}<div class="text-danger small">{{ form.label.errors }}</div>{% endif %}
+                            </div>
+                            <div class="col-md-4">
+                                {{ form.amount }}
+                                {% if form.amount.errors %}<div class="text-danger small">{{ form.amount.errors }}</div>{% endif %}
+                            </div>
+                            <div class="col-md-3">
+                                {{ form.DELETE }}
+                                {% if not forloop.first %}
+                                <button type="button" class="btn btn-sm btn-outline-danger remove-charge">Remove</button>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-primary mt-2" id="add-charge">+ Add Another Charge</button>
+                    
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-primary">Save Costing</button>
+                        {% if client_pk %}
+                        <a href="{% url 'client_detail' client_pk %}" class="btn btn-secondary">Cancel</a>
+                        {% else %}
+                        <a href="{% url 'job_detail' job.pk %}" class="btn btn-secondary">Cancel</a>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if is_edit and costing %}
+<div class="row mt-4">
+    <div class="col">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Cost Summary</h5>
+                <table class="table">
+                    <tr><th>Paper Cost:</th><td>₹{{ costing.paper_cost }}</td></tr>
+                    <tr><th>Printing Cost:</th><td>₹{{ costing.printing_cost }}</td></tr>
+                    <tr><th>Plate Cost:</th><td>₹{{ costing.plate_cost }}</td></tr>
+                    <tr><th>Die Charge:</th><td>₹{{ costing.die_charge }}</td></tr>
+                    <tr><th>Lamination:</th><td>₹{{ costing.lamination_charge }}</td></tr>
+                    <tr><th>Packing:</th><td>₹{{ costing.packing_charge }}</td></tr>
+                    <tr><th>Transport:</th><td>₹{{ costing.transport_charge }}</td></tr>
+                    {% for charge in costing.additional_charges.all %}
+                    <tr><th>{{ charge.label }}:</th><td>₹{{ charge.amount }}</td></tr>
+                    {% endfor %}
+                    <tr><th><strong>Grand Total:</strong></th><td><strong>₹{{ costing.grand_total }}</strong></td></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const addChargeBtn = document.getElementById('add-charge');
+    const chargesFormset = document.getElementById('charges-formset');
+    const managementForm = chargesFormset.querySelector('[name="charges-TOTAL_FORMS"]');
+    
+    addChargeBtn.addEventListener('click', function() {
+        const totalForms = parseInt(managementForm.value);
+        const emptyForm = chargesFormset.querySelector('.charge-row:last-child');
+        const newForm = emptyForm.cloneNode(true);
+        
+        newForm.querySelectorAll('input').forEach(function(input) {
+            const name = input.name.replace(/charges-\d+-/, 'charges-' + totalForms + '-');
+            const id = input.id.replace(/id_charges-\d+-/, 'id_charges-' + totalForms + '-');
+            input.name = name;
+            input.id = id;
+            input.value = '';
+        });
+        
+        newForm.querySelector('.remove-charge').style.display = 'inline-block';
+        chargesFormset.appendChild(newForm);
+        managementForm.value = totalForms + 1;
+    });
+    
+    chargesFormset.addEventListener('click', function(e) {
+        if (e.target.classList.contains('remove-charge')) {
+            const row = e.target.closest('.charge-row');
+            const deleteCheckbox = row.querySelector('[name$="-DELETE"]');
+            deleteCheckbox.checked = true;
+            row.style.display = 'none';
+        }
+    });
+});
+</script>
+{% endblock %}

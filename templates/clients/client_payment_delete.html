@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete Payment - {{ client.name }} - Printing ERP{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2>Delete Payment - {{ client.name }}</h2>
+        <a href="{% url 'client_detail' client.pk %}" class="btn btn-secondary btn-sm">Back to Client</a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="alert alert-danger">
+            <h5 class="alert-heading">Delete Payment</h5>
+            <p>You are about to delete the following payment:</p>
+            <ul>
+                <li><strong>Amount:</strong> ₹{{ payment.amount }}</li>
+                <li><strong>Date:</strong> {{ payment.payment_date }}</li>
+                <li><strong>Mode:</strong> {{ payment.get_payment_mode_display }}</li>
+                <li><strong>Reference:</strong> {{ payment.reference_number|default:"-" }}</li>
+            </ul>
+            <p class="mb-0">This action cannot be undone.</p>
+        </div>
+        
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">Delete Payment</button>
+            <a href="{% url 'client_detail' client.pk %}" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

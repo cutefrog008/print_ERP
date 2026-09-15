@@ -1,0 +1,162 @@
+{% extends 'base.html' %}
+{% load duration_filters %}
+
+{% block title %}Attendance Report - Printing ERP{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2>Attendance Report</h2>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">Employee</label>
+                <select name="employee" class="form-select">
+                    <option value="">All Employees</option>
+                    {% for employee in employees %}
+                    <option value="{{ employee.id }}" {% if selected_employee and selected_employee.id == employee.id %}selected{% endif %}>
+                        {{ employee.user.get_full_name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Month</label>
+                <select name="month" class="form-select">
+                    {% for option in month_options %}
+                    <option value="{{ option.month }}" {% if selected_month == option.month and selected_year == option.year %}selected{% endif %}>
+                        {{ option.label }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Year</label>
+                <select name="year" class="form-select">
+                    {% for option in month_options %}
+                    <option value="{{ option.year }}" {% if selected_year == option.year %}selected{% endif %}>
+                        {{ option.year }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary">Filter</button>
+                <a href="{% url 'attendance_report' %}" class="btn btn-secondary ms-2">Reset</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="alert alert-info" role="alert">
+    <strong>Showing attendance for:</strong> 
+    {% if selected_employee %}
+        {{ selected_employee.user.get_full_name }} - 
+    {% else %}
+        All Employees - 
+    {% endif %}
+    {{ start_date|date:"F Y" }} ({{ start_date }} to {{ end_date }})
+    {% if total_overtime_hours > 0 %}
+        <br><strong>Total Overtime this month:</strong> {{ total_overtime_hours|floatformat:2 }} hours
+    {% endif %}
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Employee</th>
+                        <th>In Time</th>
+                        <th>Out Time</th>
+                        <th>Total Time</th>
+                        <th>Overtime</th>
+                        <th>Status</th>
+                        <th>Marked By</th>
+                        <th>Remarks</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for attendance in attendances %}
+                    <tr>
+                        <td>{{ attendance.date }}</td>
+                        <td>{{ attendance.employee.user.get_full_name }}</td>
+                        <td>{{ attendance.in_time|default:"-" }}</td>
+                        <td>{{ attendance.out_time|default:"-" }}</td>
+                        <td>{{ attendance.total_time|duration_to_hours_label }}</td>
+                        <td>{{ attendance.overtime|duration_to_hours_label }}</td>
+                        <td><span class="badge bg-{% if attendance.status == 'present' %}success{% elif attendance.status == 'absent' %}danger{% elif attendance.status == 'half_day' %}warning{% elif attendance.status == 'leave' %}info{% else %}secondary{% endif %}">{{ attendance.get_status_display }}</span></td>
+                        <td>{{ attendance.marked_by.get_full_name }}</td>
+                        <td>{{ attendance.remarks|default:"-" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" class="text-center">No attendance records found</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% if selected_employee %}
+<div class="card mt-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">Monthly Summary - {{ selected_employee.user.get_full_name }}</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="card bg-light">
+                    <div class="card-body text-center">
+                        <h6 class="card-title">Total Overtime</h6>
+                        <h4 class="card-text">{{ total_overtime|duration_to_hours_label }}</h4>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-light">
+                    <div class="card-body text-center">
+                        <h6 class="card-title">Total Leave Days</h6>
+                        <h4 class="card-text">{{ total_leave_days }}</h4>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-light">
+                    <div class="card-body text-center">
+                        <h6 class="card-title">Advance Taken</h6>
+                        <h4 class="card-text">₹{{ total_advance_taken|floatformat:2 }}</h4>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-light">
+                    <div class="card-body text-center">
+                        <h6 class="card-title">Advance Returned</h6>
+                        <h4 class="card-text">₹{{ total_advance_returned|floatformat:2 }}</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% if total_advance_pending > 0 %}
+        <div class="row mt-3">
+            <div class="col-md-12">
+                <div class="alert alert-warning">
+                    <strong>Pending Advance (including carry-forward): ₹{{ total_advance_pending|floatformat:2 }}</strong>
+                    <br><small>This amount will be carried forward to next month calculation.</small>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}

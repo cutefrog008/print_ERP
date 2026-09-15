@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete Plate Pricing - Printing ERP{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2>Delete Plate Pricing</h2>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <p>Are you sure you want to delete this plate pricing rule?</p>
+        <p><strong>{{ pricing }}</strong></p>
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">Delete</button>
+            <a href="{% url 'pricing:plate_pricing_list' client.pk %}" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

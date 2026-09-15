@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if is_edit %}Edit Invoice{% else %}Create Invoice{% endif %} - Printing ERP{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2>{% if is_edit %}Edit Invoice{% else %}Create Invoice{% endif %}</h2>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+            {% endif %}
+            {% if is_edit %}
+            <div class="mb-3">
+                <label class="form-label">Invoice Number</label>
+                <input type="text" class="form-control" value="{{ invoice.invoice_number }}" readonly>
+            </div>
+            {% endif %}
+            <div class="mb-3">
+                {{ form.client.label_tag }}
+                {{ form.client }}
+                {% if form.client.errors %}<div class="text-danger small">{{ form.client.errors }}</div>{% endif %}
+            </div>
+            <div class="mb-3">
+                {{ form.status.label_tag }}
+                {{ form.status }}
+                {% if form.status.errors %}<div class="text-danger small">{{ form.status.errors }}</div>{% endif %}
+            </div>
+            <div class="mb-3">
+                {{ form.gst_rate.label_tag }}
+                {{ form.gst_rate }}
+                {% if form.gst_rate.errors %}<div class="text-danger small">{{ form.gst_rate.errors }}</div>{% endif %}
+            </div>
+            <div class="mb-3">
+                {{ form.remarks.label_tag }}
+                {{ form.remarks }}
+                {% if form.remarks.errors %}<div class="text-danger small">{{ form.remarks.errors }}</div>{% endif %}
+            </div>
+            <button type="submit" class="btn btn-primary">{% if is_edit %}Update Invoice{% else %}Create Invoice{% endif %}</button>
+            <a href="{% if is_edit %}{% url 'invoice_detail' invoice.pk %}{% else %}{% url 'invoice_list' %}{% endif %}" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

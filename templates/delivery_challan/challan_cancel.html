@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block title %}Cancel {{ challan.challan_number }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">🚫 Cancel Delivery Challan</h5>
+            </div>
+            <div class="card-body p-5">
+                <h3 class="text-danger mb-3">Are you sure?</h3>
+                <p class="lead mb-3">
+                    You are cancelling challan <strong>{{ challan.challan_number }}</strong>
+                    for <strong>{{ challan.client.name }}</strong> dated
+                    {{ challan.challan_date|date:"d/m/Y" }}.
+                </p>
+                <div class="alert alert-warning">
+                    <h6>⚠ What happens when you cancel:</h6>
+                    <ul class="mb-0">
+                        <li>All <strong>{{ items_count }} job(s)</strong> in this challan will be returned to <strong>Ready for Challan</strong></li>
+                        <li>Jobs will become available for selection in a new challan</li>
+                        <li>The original challan will be preserved in history (never deleted)</li>
+                        <li>Status will be permanently set to <strong>Cancelled</strong> — cannot be undone</li>
+                    </ul>
+                </div>
+                <form method="post" class="mt-4">
+                    {% csrf_token %}
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">{{ form.reason.label }} *</label>
+                        {{ form.reason }}
+                        {% if form.reason.errors %}
+                        <div class="text-danger small mt-1">{{ form.reason.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{% url 'delivery_challan:challan_detail' challan.pk %}" class="btn btn-secondary px-4">
+                            ← Go Back
+                        </a>
+                        <button type="submit" class="btn btn-danger px-5"
+                                onclick="return confirm('Confirm cancellation? This cannot be undone.')">
+                            🚫 Yes, Cancel Challan
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

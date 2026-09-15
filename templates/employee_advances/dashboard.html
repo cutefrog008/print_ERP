@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+
+{% block title %}Employee Advances - Printing ERP{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2>Employee Advances</h2>
+    </div>
+    <div class="col text-end">
+        <a href="{% url 'add_advance' %}" class="btn btn-primary">Add Advance</a>
+        <a href="{% url 'record_repayment' %}" class="btn btn-success">Record Repayment</a>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-white bg-primary">
+            <div class="card-body">
+                <h5 class="card-title">Employees with Advance</h5>
+                <h2 class="card-text">{{ total_employees_with_advance }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-info">
+            <div class="card-body">
+                <h5 class="card-title">Total Taken</h5>
+                <h2 class="card-text">₹{{ total_taken }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-success">
+            <div class="card-body">
+                <h5 class="card-title">Total Returned</h5>
+                <h2 class="card-text">₹{{ total_returned }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white {% if total_pending > 0 %}bg-warning{% else %}bg-secondary{% endif %}">
+            <div class="card-body">
+                <h5 class="card-title">Total Pending</h5>
+                <h2 class="card-text">₹{{ total_pending }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Search and Filter -->
+<div class="row mb-4">
+    <div class="col">
+        <form method="get" class="d-flex gap-2">
+            <input type="text" name="search" class="form-control" placeholder="Search employee..." value="{{ search }}">
+            <button type="submit" class="btn btn-outline-primary">Search</button>
+            <a href="{% url 'advance_dashboard' %}" class="btn btn-outline-secondary">Reset</a>
+        </form>
+    </div>
+</div>
+
+<!-- Employee Summary Table -->
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Employee</th>
+                        <th>Total Taken</th>
+                        <th>Total Returned</th>
+                        <th>Pending</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for summary in employee_summaries %}
+                    <tr>
+                        <td>{{ summary.employee.user.get_full_name }}</td>
+                        <td>₹{{ summary.total_taken }}</td>
+                        <td>₹{{ summary.total_returned }}</td>
+                        <td style="color: {% if summary.pending > 0 %}red{% else %}green{% endif %}; font-weight: bold;">₹{{ summary.pending }}</td>
+                        <td>
+                            <a href="{% url 'employee_advance_detail' summary.employee.id %}"class="btn btn-sm btn-outline-primary">View Ledger</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center">No advance records found</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

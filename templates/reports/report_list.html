@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block title %}Reports - Printing ERP{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2>Reports</h2>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">Production Report</h5>
+                <p class="card-text">View production statistics over a date range.</p>
+                <a href="{% url 'production_report' %}" class="btn btn-primary">View Report</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">Attendance Report</h5>
+                <p class="card-text">View attendance records over a date range.</p>
+                <a href="{% url 'attendance_report' %}" class="btn btn-primary">View Report</a>
+            </div>
+        </div>
+    </div>
+    {% if user.role == 'admin' %}
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">Client Report</h5>
+                <p class="card-text">View client-wise production and costing.</p>
+                <a href="{% url 'client_report' %}" class="btn btn-primary">View Report</a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">Employee Productivity</h5>
+                <p class="card-text">View employee-wise productivity metrics.</p>
+                <a href="{% url 'employee_productivity_report' %}" class="btn btn-primary">View Report</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

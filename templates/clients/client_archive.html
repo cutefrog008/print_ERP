@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block title %}Archive Client - {{ client.name }} - Printing ERP{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2>Archive Client - {{ client.name }}</h2>
+        <a href="{% url 'client_detail' client.pk %}" class="btn btn-secondary btn-sm">Back to Client</a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="alert alert-info">
+            <h5 class="alert-heading">Archive Client</h5>
+            <p>You are about to archive this client. This client has production history and cannot be permanently deleted.</p>
+            <p><strong>Archived clients:</strong></p>
+            <ul>
+                <li>Will not appear in the default client list</li>
+                <li>Cannot be used for new jobs</li>
+                <li>All production history will be preserved</li>
+                <li>Can be restored at any time by an admin</li>
+            </ul>
+        </div>
+        
+        <p>Are you sure you want to archive <strong>{{ client.name }}</strong>?</p>
+        
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-info">Archive Client</button>
+            <a href="{% url 'client_detail' client.pk %}" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

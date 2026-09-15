@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+
+{% block title %}Change Status - {{ challan.challan_number }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Change Status</h5>
+            </div>
+            <div class="card-body p-5">
+                <div class="mb-4">
+                    <a href="{% url 'delivery_challan:challan_detail' challan.pk %}" class="btn btn-sm btn-outline-secondary mb-2">← Back</a>
+                    <h3 class="mb-1">{{ challan.challan_number }}</h3>
+                    <p class="text-muted mb-0">Current status:
+                        <span class="badge
+                            {% if challan.status == 'created' %}bg-secondary
+                            {% elif challan.status == 'completed' %}bg-success{% endif %}">
+                            {{ challan.get_status_display }}
+                        </span>
+                    </p>
+                </div>
+
+                <div class="row mb-4 g-3">
+                    <div class="col-md-6">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <div class="text-muted small">Jobs</div>
+                                <h4 class="mb-0">{{ challan.number_of_jobs }}</h4>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <div class="text-muted small">Total Qty</div>
+                                <h4 class="mb-0">{{ challan.total_quantity }} sheets</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert alert-info mb-4">
+                    <h6>Status meanings</h6>
+                    <ul class="mb-0 small">
+                        <li><strong>Created:</strong> Challan created — can still edit jobs/details</li>
+                        <li><strong>Completed:</strong> Delivery done — final status, cannot be edited further</li>
+                    </ul>
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">New Status</label>
+                        {{ form.status }}
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">{{ form.reason.label }}</label>
+                        {{ form.reason }}
+                    </div>
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{% url 'delivery_challan:challan_detail' challan.pk %}" class="btn btn-secondary px-4">Cancel</a>
+                        <button type="submit" class="btn btn-primary btn-lg px-5">Update Status</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

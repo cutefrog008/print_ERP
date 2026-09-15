@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+
+{% block title %}Delivery Challans - Mengo Printers{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="mb-1">Delivery Challans</h2>
+        <p class="text-muted mb-0">Manage delivery challans for completed jobs</p>
+    </div>
+    {% if is_admin %}
+    <div class="d-flex gap-2">
+        <a href="{% url 'delivery_challan:bulk_monthly_cleanup' %}" class="btn btn-outline-danger btn-lg"
+           title="Permanently delete monthly production and delivery challan history">
+            Monthly Cleanup
+        </a>
+        <a href="{% url 'delivery_challan:challan_create' %}" class="btn btn-primary btn-lg">
+            New Delivery Challan
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label fw-semibold">Search</label>
+                <input type="text" name="q" class="form-control" placeholder="Challan #, Client..."
+                       value="{{ filters.q }}">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label fw-semibold">Client</label>
+                <select name="client" class="form-select">
+                    <option value="">All Clients</option>
+                    {% for c in clients %}
+                    <option value="{{ c.id }}" {% if filters.client == c.id|stringformat:'s' %}selected{% endif %}>
+                        {{ c.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label fw-semibold">Status</label>
+                <select name="status" class="form-select">
+                    <option value="">All Statuses</option>
+                    {% for v, label in status_choices %}
+                    <option value="{{ v }}" {% if filters.status == v %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label fw-semibold">From Date</label>
+                <input type="date" name="start_date" class="form-control" value="{{ filters.start_date }}">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label fw-semibold">To Date</label>
+                <input type="date" name="end_date" class="form-control" value="{{ filters.end_date }}">
+            </div>
+            <div class="col-md-1 d-flex align-items-end">
+                <div class="w-100 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary w-100">Search</button>
+                    <a href="{% url 'delivery_challan:challan_list' %}" class="btn btn-secondary">Reset</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Challan #</th>
+                        <th>Date</th>
+                        <th>Client</th>
+                        <th class="text-center">Jobs</th>
+                        <th class="text-end">Qty (Sheets)</th>
+                        <th class="text-end">Total Cost</th>
+                        <th>Status</th>
+                        <th>Created By</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in challans %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'delivery_challan:challan_detail' c.pk %}" class="fw-bold text-decoration-none">
+                                {{ c.challan_number }}
+                            </a>
+                        </td>
+                        <td>{{ c.challan_date|date:"d/m/Y" }}</td>
+                        <td>{{ c.client.name }}{% if c.client.company %}<br><small class="text-muted">{{ c.client.company }}</small>{% endif %}</td>
+                        <td class="text-center"><span class="badge bg-info">{{ c.number_of_jobs }}</span></td>
+                        <td class="text-end">{{ c.total_quantity }}</td>
+                        <td class="text-end fw-semibold">₹{{ c.total_cost|floatformat:2 }}</td>
+                        <td>
+                            {% if c.status == 'created' %}
+                            <span class="badge bg-secondary">Created</span>
+                            {% elif c.status == 'completed' %}
+                            <span class="badge bg-success">Completed</span>
+                            {% elif c.status == 'cancelled' %}
+                            <span class="badge bg-danger">Cancelled</span>
+                            {% endif %}
+                        </td>
+                        <td><small>{{ c.created_by.get_full_name|default:c.created_by.username }}</small></td>
+                        <td>
+                            <div class="d-flex gap-1 flex-wrap">
+                                <a href="{% url 'delivery_challan:challan_detail' c.pk %}" class="btn btn-sm btn-outline-primary">View</a>
+                                {% if is_admin and c.status not in 'completed,cancelled' %}
+                                <a href="{% url 'delivery_challan:challan_edit' c.pk %}" class="btn btn-sm btn-outline-warning">Edit</a>
+                                {% endif %}
+                                <a href="{% url 'delivery_challan:challan_print' c.pk %}" target="_blank" class="btn btn-sm btn-outline-info">Print</a>
+                                {% if is_admin and c.status not in 'completed,cancelled' %}
+                                <a href="{% url 'delivery_challan:challan_cancel' c.pk %}" class="btn btn-sm btn-outline-danger"
+                                   onclick="return confirm('Cancel {{ c.challan_number }}? All jobs will be returned.')">
+                                    Cancel
+                                </a>
+                                {% endif %}
+                                {% if is_admin %}
+                                <a href="{% url 'delivery_challan:challan_delete' c.pk %}" class="btn btn-sm btn-outline-danger"
+                                   onclick="return confirm('⚠ PERMANENTLY DELETE {{ c.challan_number }}? All jobs will be returned. This cannot be undone.')"
+                                   title="Delete permanently (old record cleanup)">
+                                    Delete
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" class="text-center py-5 text-muted">
+                            <h5 class="mb-2">No Delivery Challans Found</h5>
+                            <p class="mb-0">{% if is_admin %}<a href="{% url 'delivery_challan:challan_create' %}">Create the first challan</a>{% else %}Challans will appear here once created.{% endif %}</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

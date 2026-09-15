@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ form.instance.pk|yesno:"Edit Employee,Add Employee" }} - Printing ERP{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2>{{ form.instance.pk|yesno:"Edit Employee,Add Employee" }}</h2>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+            {% endif %}
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    {{ form.username.label_tag }}
+                    {{ form.username }}
+                    {% if form.username.errors %}<div class="text-danger small">{{ form.username.errors }}</div>{% endif %}
+                </div>
+                <div class="col-md-6 mb-3">
+                    {{ form.password.label_tag }}
+                    {% if form.instance.pk %}
+                    <small class="text-muted">{{ form.password.help_text }}</small>
+                    {% endif %}
+                    {{ form.password }}
+                    {% if form.password.errors %}<div class="text-danger small">{{ form.password.errors }}</div>{% endif %}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    {{ form.first_name.label_tag }}
+                    {{ form.first_name }}
+                    {% if form.first_name.errors %}<div class="text-danger small">{{ form.first_name.errors }}</div>{% endif %}
+                </div>
+                <div class="col-md-6 mb-3">
+                    {{ form.last_name.label_tag }}
+                    {{ form.last_name }}
+                    {% if form.last_name.errors %}<div class="text-danger small">{{ form.last_name.errors }}</div>{% endif %}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    {{ form.role.label_tag }}
+                    {{ form.role }}
+                    {% if form.role.errors %}<div class="text-danger small">{{ form.role.errors }}</div>{% endif %}
+                </div>
+                <div class="col-md-6 mb-3">
+                    {{ form.phone.label_tag }}
+                    {{ form.phone }}
+                    {% if form.phone.errors %}<div class="text-danger small">{{ form.phone.errors }}</div>{% endif %}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    {{ form.joining_date.label_tag }}
+                    {{ form.joining_date }}
+                    {% if form.joining_date.errors %}<div class="text-danger small">{{ form.joining_date.errors }}</div>{% endif %}
+                </div>
+                <div class="col-md-6 mb-3">
+                    {{ form.status.label_tag }}
+                    {{ form.status }}
+                    {% if form.status.errors %}<div class="text-danger small">{{ form.status.errors }}</div>{% endif %}
+                </div>
+            </div>
+            <div class="mb-3">
+                {{ form.photo.label_tag }}
+                {{ form.photo }}
+                {% if form.photo.errors %}<div class="text-danger small">{{ form.photo.errors }}</div>{% endif %}
+            </div>
+            <button type="submit" class="btn btn-primary">Save</button>
+            <a href="{% url 'employee_list' %}" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

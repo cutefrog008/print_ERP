@@ -1,0 +1,169 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ job.pk|yesno:"Edit Job,Add Job" }} - Printing ERP{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2>{{ job.pk|yesno:"Edit Job,Add Job" }}</h2>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+            {% endif %}
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    {{ form.client.label_tag }}
+                    {{ form.client }}
+                    {% if form.client.errors %}<div class="text-danger small">{{ form.client.errors }}</div>{% endif %}
+                </div>
+                <div class="col-md-6 mb-3">
+                    {{ form.job_name.label_tag }}
+                    {{ form.job_name }}
+                    {% if form.job_name.errors %}<div class="text-danger small">{{ form.job_name.errors }}</div>{% endif %}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    {{ form.paper_size.label_tag }}
+                    {{ form.paper_size }}
+                    {% if form.paper_size.errors %}<div class="text-danger small">{{ form.paper_size.errors }}</div>{% endif %}
+                </div>
+                <div class="col-md-4 mb-3">
+                    {{ form.paper_gsm.label_tag }}
+                    {{ form.paper_gsm }}
+                    {% if form.paper_gsm.errors %}<div class="text-danger small">{{ form.paper_gsm.errors }}</div>{% endif %}
+                </div>
+                <div class="col-md-4 mb-3">
+                    {{ form.paper_type.label_tag }}
+                    {{ form.paper_type }}
+                    {% if form.paper_type.errors %}<div class="text-danger small">{{ form.paper_type.errors }}</div>{% endif %}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    {{ form.printing_colors.label_tag }}
+                    {{ form.printing_colors }}
+                    {% if form.printing_colors.errors %}<div class="text-danger small">{{ form.printing_colors.errors }}</div>{% endif %}
+                </div>
+                <div class="col-md-4 mb-3">
+                    {{ form.number_of_sheets.label_tag }}
+                    {{ form.number_of_sheets }}
+                    {% if form.number_of_sheets.errors %}<div class="text-danger small">{{ form.number_of_sheets.errors }}</div>{% endif %}
+                </div>
+                <div class="col-md-4 mb-3">
+                    {{ form.printing_type.label_tag }}
+                    {{ form.printing_type }}
+                    {% if form.printing_type.errors %}<div class="text-danger small">{{ form.printing_type.errors }}</div>{% endif %}
+                </div>
+                <div class="col-md-4 mb-3">
+                    {{ form.total_sheets.label_tag }}
+                    {{ form.total_sheets }}
+                    {% if form.total_sheets.errors %}<div class="text-danger small">{{ form.total_sheets.errors }}</div>{% endif %}
+                </div>
+            </div>
+            <div class="row">
+                <div class="{% if job %}col-md-6{% else %}col-md-12{% endif %} mb-3">
+                    {{ form.operator.label_tag }}
+                    {{ form.operator }}
+                    {% if form.operator.errors %}<div class="text-danger small">{{ form.operator.errors }}</div>{% endif %}
+                </div>
+                {% if job %}
+                <div class="col-md-6 mb-3">
+                    {{ form.status.label_tag }}
+                    {{ form.status }}
+                    {% if form.status.errors %}<div class="text-danger small">{{ form.status.errors }}</div>{% endif %}
+                </div>
+                {% endif %}
+            </div>
+            <div class="mb-3">
+                {{ form.remarks.label_tag }}
+                {{ form.remarks }}
+                {% if form.remarks.errors %}<div class="text-danger small">{{ form.remarks.errors }}</div>{% endif %}
+            </div>
+
+            <button type="submit" class="btn btn-primary">Save</button>
+            {% if client_pk %}
+            <a href="{% url 'client_detail' client_pk %}" class="btn btn-secondary">Cancel</a>
+            {% else %}
+            <a href="{% url 'job_list' %}" class="btn btn-secondary">Cancel</a>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+<datalist id="paper_size_options">
+    <option value="11.5x18">
+    <option value="12x18">
+    <option value="12.5x18">
+    <option value="12x23">
+    <option value="12x25">
+    <option value="13x19">
+    <option value="14x22">
+    <option value="15x20">
+    <option value="18x22">
+    <option value="18x23">
+    <option value="18x25">
+    <option value="20x30">
+</datalist>
+
+<datalist id="paper_gsm_options">
+    <option value="54">
+    <option value="58">
+    <option value="64">
+    <option value="70">
+    <option value="75">
+    <option value="80">
+    <option value="90">
+    <option value="100">
+    <option value="120">
+    <option value="128">
+    <option value="170">
+    <option value="210">
+    <option value="250">
+    <option value="300">
+    <option value="350">
+</datalist>
+
+<datalist id="paper_type_options">
+    <option value="Art Paper">
+    <option value="Matte">
+    <option value="Maflito">
+    <option value="Gum Sheet">
+    <option value="Art Card">
+    <option value="Duplex">
+    <option value="SBS">
+</datalist>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const numberOfSheetsInput = document.getElementById('id_number_of_sheets');
+    const printingTypeSelect = document.getElementById('id_printing_type');
+    const totalSheetsInput = document.getElementById('id_total_sheets');
+
+    function calculateTotalSheets() {
+        const numberOfSheets = parseInt(numberOfSheetsInput.value) || 0;
+        const printingType = printingTypeSelect.value;
+        
+        if (printingType === 'single') {
+            totalSheetsInput.value = numberOfSheets;
+        } else if (printingType === 'front_back') {
+            totalSheetsInput.value = numberOfSheets * 2;
+        } else {
+            totalSheetsInput.value = '';
+        }
+    }
+
+    numberOfSheetsInput.addEventListener('input', calculateTotalSheets);
+    printingTypeSelect.addEventListener('change', calculateTotalSheets);
+
+    // Calculate on page load if values exist
+    calculateTotalSheets();
+});
+</script>
+{% endblock %}

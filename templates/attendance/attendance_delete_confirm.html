@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete Attendance - Printing ERP{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2>Delete Attendance Records</h2>
+    </div>
+    <div class="col text-end">
+        <a href="{% url 'attendance_list' %}" class="btn btn-secondary">Back to Attendance List</a>
+    </div>
+</div>
+
+<div class="card border-danger">
+    <div class="card-header bg-danger text-white">
+        <h5 class="mb-0">⚠️ Warning: This action cannot be undone</h5>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-danger">
+            <h5>Are you sure you want to delete {{ count }} attendance record(s)?</h5>
+            <p class="mb-0">
+                <strong>Employee:</strong> {{ employee.user.get_full_name }}<br>
+                <strong>Month:</strong> {{ start_date|date:"F Y" }}<br>
+                <strong>Date Range:</strong> {{ start_date }} to {{ end_date }}<br>
+                <strong>Records to Delete:</strong> {{ count }}
+            </p>
+            <p class="mb-0 mt-2">This action will permanently delete all attendance records for this employee in the selected month.</p>
+        </div>
+        
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="employee_id" value="{{ employee.id }}">
+            <input type="hidden" name="month" value="{{ month }}">
+            <input type="hidden" name="year" value="{{ year }}">
+            <button type="submit" class="btn btn-danger">Yes, Delete {{ count }} Record(s)</button>
+            <a href="{% url 'attendance_list' %}" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

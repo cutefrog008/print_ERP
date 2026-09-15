@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block title %}Invoices - Printing ERP{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2>Invoices</h2>
+    </div>
+    <div class="col text-end">
+        <a href="{% url 'invoice_create' %}" class="btn btn-primary">Create Invoice</a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Invoice No.</th>
+                        <th>Client</th>
+                        <th>Date</th>
+                        <th>Total Amount</th>
+                        <th>Paid Amount</th>
+                        <th>Outstanding</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for invoice in invoices %}
+                    <tr>
+                        <td>{{ invoice.invoice_number }}</td>
+                        <td>{{ invoice.client.name }}</td>
+                        <td>{{ invoice.date }}</td>
+                        <td>₹{{ invoice.total_amount }}</td>
+                        <td>₹{{ invoice.paid_amount }}</td>
+                        <td>₹{{ invoice.outstanding_amount }}</td>
+                        <td><span class="badge bg-{% if invoice.status == 'paid' %}success{% elif invoice.status == 'partial' %}warning{% else %}danger{% endif %}">{{ invoice.get_status_display }}</span></td>
+                        <td>
+                            <a href="{% url 'invoice_detail' invoice.pk %}" class="btn btn-sm btn-info">View</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center">No invoices found</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

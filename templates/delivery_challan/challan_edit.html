@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit {{ challan.challan_number }}{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="{% url 'delivery_challan:challan_detail' challan.pk %}" class="btn btn-sm btn-outline-secondary mb-2">← Back to Challan</a>
+    <h2>Edit {{ challan.challan_number }}</h2>
+    <p class="text-muted mb-0">Client: <strong>{{ challan.client.name }}</strong>
+        {% if challan.client.company %} ({{ challan.client.company }}){% endif %}
+        — Status:
+        <span class="badge
+            {% if challan.status == 'created' %}bg-secondary
+            {% elif challan.status == 'completed' %}bg-success{% endif %}">
+            {{ challan.get_status_display }}
+        </span>
+    </p>
+</div>
+
+<form method="post">
+    {% csrf_token %}
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Challan Details</h5>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Challan Date</label>
+                    {{ form.challan_date }}
+                </div>
+                <div class="col-md-12">
+                    <label class="form-label fw-semibold">Remarks (Optional)</label>
+                    {{ form.remarks }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Jobs in this Challan ({{ challan.number_of_jobs }})</h5>
+            <a href="{% url 'delivery_challan:challan_add_jobs' challan.pk %}" class="btn btn-sm btn-primary">Add More Jobs</a>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>#</th><th>Job #</th><th>Job Name</th><th>Color</th><th>Print Type</th><th>Operator</th>
+                            <th class="text-end">Qty (Sheets)</th>
+                            <th class="text-end">Total Sheets</th>
+                            <th class="text-end">Total Printing</th>
+                            <th class="text-end">Cost</th><th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in items %}
+                        <tr>
+                            <td class="text-muted">{{ forloop.counter }}</td>
+                            <td class="fw-semibold">{{ item.job_number }}</td>
+                            <td>{{ item.job_name }}</td>
+                            <td>{{ item.printing_color_display }}</td>
+                            <td>{{ item.printing_type }}</td>
+                            <td>{{ item.operator|default:"-" }}</td>
+                            <td class="text-end fw-semibold">{{ item.quantity }}</td>
+                            <td class="text-end fw-semibold">{{ item.total_sheets }}</td>
+                            <td class="text-end fw-bold text-primary">{{ item.total_printing }}</td>
+                            <td class="text-end">₹{{ item.manual_cost|floatformat:2 }}</td>
+                            <td>
+                                <form method="post"
+                                      action="{% url 'delivery_challan:challan_remove_job' challan.pk item.pk %}"
+                                      onsubmit="return confirm('Remove job \"{{ item.job_name }}\"?');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Remove</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="11" class="text-center py-4 text-muted">No jobs. Add jobs using the button above.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                    {% if items %}
+                    <tfoot>
+                        <tr class="table-info fw-semibold">
+                            <td colspan="6" class="text-end">TOTALS →</td>
+                            <td class="text-end">{{ challan.total_quantity }}</td>
+                            <td class="text-end">{{ challan.total_sheets }}</td>
+                            <td class="text-end text-primary">{{ challan.total_printing }}</td>
+                            <td class="text-end">₹{{ challan.total_cost|floatformat:2 }}</td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                    {% endif %}
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between sticky-bottom bg-white py-3 border-top">
+        <a href="{% url 'delivery_challan:challan_detail' challan.pk %}" class="btn btn-secondary">Cancel</a>
+        <button type="submit" class="btn btn-success btn-lg px-5">Save Changes</button>
+    </div>
+</form>
+{% endblock %}

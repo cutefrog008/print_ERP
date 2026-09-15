@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block title %}Calculate Billing - {{ job.job_name }} - Printing ERP{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2>Calculate Billing for {{ job.job_name }}</h2>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+            {% endif %}
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    {{ form.color_charge.label_tag }}
+                    {{ form.color_charge }}
+                    {% if form.color_charge.errors %}<div class="text-danger small">{{ form.color_charge.errors }}</div>{% endif %}
+                </div>
+                <div class="col-md-6 mb-3">
+                    {{ form.front_back_charge.label_tag }}
+                    {{ form.front_back_charge }}
+                    {% if form.front_back_charge.errors %}<div class="text-danger small">{{ form.front_back_charge.errors }}</div>{% endif %}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    {{ form.plate_charge.label_tag }}
+                    {{ form.plate_charge }}
+                    {% if form.plate_charge.errors %}<div class="text-danger small">{{ form.plate_charge.errors }}</div>{% endif %}
+                </div>
+                <div class="col-md-6 mb-3">
+                    {{ form.packing_charge.label_tag }}
+                    {{ form.packing_charge }}
+                    {% if form.packing_charge.errors %}<div class="text-danger small">{{ form.packing_charge.errors }}</div>{% endif %}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    {{ form.transport_charge.label_tag }}
+                    {{ form.transport_charge }}
+                    {% if form.transport_charge.errors %}<div class="text-danger small">{{ form.transport_charge.errors }}</div>{% endif %}
+                </div>
+                <div class="col-md-6 mb-3">
+                    {{ form.lamination_charge.label_tag }}
+                    {{ form.lamination_charge }}
+                    {% if form.lamination_charge.errors %}<div class="text-danger small">{{ form.lamination_charge.errors }}</div>{% endif %}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    {{ form.die_charge.label_tag }}
+                    {{ form.die_charge }}
+                    {% if form.die_charge.errors %}<div class="text-danger small">{{ form.die_charge.errors }}</div>{% endif %}
+                </div>
+                <div class="col-md-6 mb-3">
+                    {{ form.other_charges.label_tag }}
+                    {{ form.other_charges }}
+                    {% if form.other_charges.errors %}<div class="text-danger small">{{ form.other_charges.errors }}</div>{% endif %}
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary">Calculate & Save</button>
+            <a href="{% url 'job_list' %}" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

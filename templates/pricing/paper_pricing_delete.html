@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete Paper Pricing - Printing ERP{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2>Delete Paper Pricing</h2>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <p>Are you sure you want to delete this paper pricing rule?</p>
+        <p><strong>{{ pricing }}</strong></p>
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">Delete</button>
+            <a href="{% url 'pricing:paper_pricing_list' client.pk %}" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}
