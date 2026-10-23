@@ -10,19 +10,22 @@ class PricingService:
     """
     
     @staticmethod
-    def calculate_job_cost(job, save=True):
+    def calculate_job_cost(job, costing_instance=None, save=False, user=None):
         """
         Calculate total cost for a job based on client pricing rules.
-        
+
         Args:
             job: Job instance
-            save: Whether to save the calculated costs to the job instance
-            
+            costing_instance: Optional existing JobCosting instance to populate.
+                If None and save=True, a new JobCosting will be created.
+            save: Whether to save the calculated costs to a JobCosting instance
+            user: User creating the costing (required if save=True and no costing_instance with created_by)
+
         Returns:
             dict: Breakdown of costs
         """
-        from production.models import Job
-        
+        from production.models import JobCosting
+
         breakdown = {
             'paper_cost': Decimal('0.00'),
             'printing_cost': Decimal('0.00'),
@@ -33,50 +36,63 @@ class PricingService:
             'pricing_found': True,
             'missing_pricing': []
         }
-        
-        # 1. Calculate Paper Cost
+
         paper_cost, paper_pricing = PricingService._calculate_paper_cost(job)
         breakdown['paper_cost'] = paper_cost
         if not paper_pricing:
             breakdown['pricing_found'] = False
             breakdown['missing_pricing'].append('Paper pricing')
-        
-        # 2. Calculate Printing Cost
+
         printing_cost, printing_pricing = PricingService._calculate_printing_cost(job)
         breakdown['printing_cost'] = printing_cost
         if not printing_pricing:
             breakdown['pricing_found'] = False
             breakdown['missing_pricing'].append('Printing pricing')
-        
-        # 3. Calculate Plate Cost
+
         plate_cost, plate_pricing = PricingService._calculate_plate_cost(job)
         breakdown['plate_cost'] = plate_cost
         if not plate_pricing:
             breakdown['pricing_found'] = False
             breakdown['missing_pricing'].append('Plate pricing')
-        
-        # 4. Calculate Additional Charges
+
         additional_charges = PricingService._calculate_additional_charges(job)
         breakdown['additional_charges_total'] = additional_charges['total']
         breakdown['additional_charges_breakdown'] = additional_charges['breakdown']
-        
-        # 5. Calculate Total
+
         breakdown['total_cost'] = (
-            breakdown['paper_cost'] + 
-            breakdown['printing_cost'] + 
-            breakdown['plate_cost'] + 
+            breakdown['paper_cost'] +
+            breakdown['printing_cost'] +
+            breakdown['plate_cost'] +
             breakdown['additional_charges_total']
         )
-        
-        # Save to job if requested
+
         if save:
-            job.paper_cost = breakdown['paper_cost']
-            job.printing_cost = breakdown['printing_cost']
-            job.plate_cost = breakdown['plate_cost']
-            job.additional_charges_total = breakdown['additional_charges_total']
-            job.total_cost = breakdown['total_cost']
-            job.save()
-        
+            if costing_instance is None:
+                costing_instance = JobCosting(job=job)
+            costing_instance.paper_cost = breakdown['paper_cost']
+            costing_instance.printing_cost = breakdown['printing_cost']
+            costing_instance.plate_cost = breakdown['plate_cost']
+            costing_instance.die_charge = Decimal('0.00')
+            costing_instance.lamination_charge = Decimal('0.00')
+            costing_instance.packing_charge = Decimal('0.00')
+            costing_instance.transport_charge = Decimal('0.00')
+            for entry in additional_charges['breakdown']:
+                name_lower = entry['name'].lower() if entry['name'] else ''
+                amt = Decimal(str(entry['amount']))
+                if 'die' in name_lower:
+                    costing_instance.die_charge += amt
+                elif 'laminat' in name_lower:
+                    costing_instance.lamination_charge += amt
+                elif 'pack' in name_lower:
+                    costing_instance.packing_charge += amt
+                elif 'transport' in name_lower:
+                    costing_instance.transport_charge += amt
+            if user is not None and not getattr(costing_instance, 'created_by_id', None):
+                costing_instance.created_by = user
+            costing_instance.calculate_total()
+            costing_instance.save()
+            breakdown['costing_instance'] = costing_instance
+
         return breakdown
     
     @staticmethod

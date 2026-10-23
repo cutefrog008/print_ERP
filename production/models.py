@@ -16,7 +16,9 @@ class Job(models.Model):
 
     PRINTING_TYPE_CHOICES = (
         ('single', 'Single Side'),
-        ('front_back', 'Front & Back'),
+        ('lotpot', 'Lotpot'),
+        ('P+P', 'P+P'),
+        ('S+P', 'S+P'),
     )
 
     STATUS_CHOICES = (
@@ -73,9 +75,9 @@ class Job(models.Model):
 
     client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name='jobs')
     job_name = models.CharField(max_length=255, blank=True, default="")
-    paper_size = models.CharField(max_length=100, choices=PAPER_SIZE_CHOICES)
-    paper_gsm = models.IntegerField(choices=PAPER_GSM_CHOICES)
-    paper_type = models.CharField(max_length=100, choices=PAPER_TYPE_CHOICES)
+    paper_size = models.CharField(max_length=100)
+    paper_gsm = models.IntegerField()
+    paper_type = models.CharField(max_length=100)
     number_of_sheets = models.IntegerField()
     printing_colors = models.IntegerField(choices=COLOR_CHOICES)
     printing_type = models.CharField(max_length=20, choices=PRINTING_TYPE_CHOICES)

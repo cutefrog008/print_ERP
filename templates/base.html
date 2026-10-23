@@ -21,6 +21,44 @@
             padding: 1.2rem;
             font-size: 1.1rem;
         }
+        .form-control,
+        .form-select,
+        .btn,
+        .form-check-input {
+            min-height: 44px;
+        }
+        .form-control,
+        .form-select {
+            font-size: 16px;
+            padding: 0.5rem 0.75rem;
+        }
+        label.form-label,
+        label {
+            font-weight: 500;
+            margin-bottom: 0.35rem;
+            display: block;
+        }
+        .mb-3 {
+            margin-bottom: 1rem !important;
+        }
+        @media (max-width: 768px) {
+            body {
+                padding-top: 56px;
+            }
+            .container {
+                padding-left: 12px;
+                padding-right: 12px;
+            }
+            .card-body {
+                padding: 1rem;
+            }
+            h2 {
+                font-size: 1.4rem;
+            }
+            .row > [class*="col-"] {
+                margin-bottom: 0.25rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -52,8 +90,11 @@
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'delivery_challan:challan_list' %}">Delivery Challan</a>
                     </li>
-                    <li class="nav-item">
+                    <!-- <li class="nav-item">
                         <a class="nav-link" href="{% url 'report_list' %}">Reports</a>
+                    </li> -->
+                    <li class="nav-item">
+                        <a class="nav-link text-warning fw-semibold" href="{% url 'backup_status' %}" title="Backup Status">⟳ Backups</a>
                     </li>
                     {% elif user.role == 'manager' %}
                     <li class="nav-item">

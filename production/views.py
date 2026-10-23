@@ -16,7 +16,14 @@ def job_list(request):
             return redirect('dashboard')
         jobs = Job.objects.filter(date=today, operator=request.user.employee_profile)
     else:
-        selected_date = request.GET.get('date', today)
+        selected_date = today
+        raw_date = request.GET.get('date')
+        if raw_date:
+            try:
+                from datetime import datetime
+                selected_date = datetime.strptime(raw_date, '%Y-%m-%d').date()
+            except (ValueError, TypeError):
+                selected_date = today
         jobs = Job.objects.filter(date=selected_date)
     return render(request, 'production/job_list.html', {'jobs': jobs, 'today': today})
 

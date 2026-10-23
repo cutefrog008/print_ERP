@@ -13,6 +13,8 @@ ENV/
 # Django
 db.sqlite3
 db.sqlite3-journal
+db.sqlite3-wal
+db.sqlite3-shm
 
 # Environment / secrets
 .env
@@ -29,6 +31,17 @@ staticfiles/
 *.log
 logs/
 
+# Backups (LOCAL ONLY - never commit backups)
+backups/
+../backups/
+*.zip
+*.bak
+*.backup
+*.tar
+*.gz
+*.sqlite3-backup
+D:\\PrintingERP\\backups\\
+
 # macOS
 .DS_Store
 
@@ -40,3 +53,6 @@ logs/
 *.swp
 *.swo
 .DS_Store
+
+# Backup scripts working dir
+backup_temp/

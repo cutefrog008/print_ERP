@@ -7,6 +7,9 @@
     <div class="col">
         <h2>{{ form.instance.pk|yesno:"Edit Machine,Add Machine" }}</h2>
     </div>
+    <div class="col text-end">
+        <a href="{% url 'machine_list' %}" class="btn btn-secondary">← Back</a>
+    </div>
 </div>
 
 <div class="card">

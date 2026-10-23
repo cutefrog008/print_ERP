@@ -3,24 +3,47 @@
 from django.db import migrations
 
 
+def _table_exists(cursor, table_name):
+    cursor.execute(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name=%s",
+        [table_name],
+    )
+    return cursor.fetchone() is not None
+
+
+def _column_exists(cursor, table_name, column_name):
+    cursor.execute(f"PRAGMA table_info({table_name})")
+    return any(row[1] == column_name for row in cursor.fetchall())
+
+
 def fix_database_schema(apps, schema_editor):
     from django.db import connection
+
     with connection.cursor() as cursor:
-        # Get current foreign key values
+        needs_fix = (
+            _column_exists(cursor, 'jobs', 'paper_size_id')
+            or _column_exists(cursor, 'jobs', 'paper_gsm_id')
+            or _column_exists(cursor, 'jobs', 'paper_type_id')
+        )
+        if not needs_fix:
+            return
+
         cursor.execute("SELECT id, paper_size_id, paper_gsm_id, paper_type_id FROM jobs")
         rows = cursor.fetchall()
-        
-        # Get data from the lookup tables
-        cursor.execute("SELECT id, name FROM paper_sizes")
-        sizes = {row[0]: row[1] for row in cursor.fetchall()}
-        
-        cursor.execute("SELECT id, value FROM paper_gsm")
-        gsm_values = {row[0]: row[1] for row in cursor.fetchall()}
-        
-        cursor.execute("SELECT id, name FROM paper_types")
-        types = {row[0]: row[1] for row in cursor.fetchall()}
-        
-        # Map foreign key values back to string/int values
+
+        sizes = {}
+        gsm_values = {}
+        types = {}
+        if _table_exists(cursor, 'paper_sizes'):
+            cursor.execute("SELECT id, name FROM paper_sizes")
+            sizes = {row[0]: row[1] for row in cursor.fetchall()}
+        if _table_exists(cursor, 'paper_gsm'):
+            cursor.execute("SELECT id, value FROM paper_gsm")
+            gsm_values = {row[0]: row[1] for row in cursor.fetchall()}
+        if _table_exists(cursor, 'paper_types'):
+            cursor.execute("SELECT id, name FROM paper_types")
+            types = {row[0]: row[1] for row in cursor.fetchall()}
+
         job_data = {}
         for row in rows:
             job_id, size_id, gsm_id, type_id = row
@@ -29,8 +52,7 @@ def fix_database_schema(apps, schema_editor):
                 'paper_gsm': gsm_values.get(gsm_id, None),
                 'paper_type': types.get(type_id, None),
             }
-        
-        # Recreate the jobs table without the foreign key columns
+
         cursor.execute("""
             CREATE TABLE jobs_new (
                 id INTEGER PRIMARY KEY,
@@ -59,33 +81,29 @@ def fix_database_schema(apps, schema_editor):
                 FOREIGN KEY (delivery_challan_id) REFERENCES delivery_challans(id)
             )
         """)
-        
-        # Copy data from old table to new table
+
         cursor.execute("""
-            INSERT INTO jobs_new (id, job_name, number_of_sheets, printing_colors, printing_type, 
-                                  machine, operator_id, remarks, date, time, created_by_id, status, 
+            INSERT INTO jobs_new (id, job_name, number_of_sheets, printing_colors, printing_type,
+                                  machine, operator_id, remarks, date, time, created_by_id, status,
                                   delivery_challan_id, dispatch_date, created_at, updated_at, client_id)
-            SELECT id, job_name, number_of_sheets, printing_colors, printing_type, 
-                   machine, operator_id, remarks, date, time, created_by_id, status, 
+            SELECT id, job_name, number_of_sheets, printing_colors, printing_type,
+                   machine, operator_id, remarks, date, time, created_by_id, status,
                    delivery_challan_id, dispatch_date, created_at, updated_at, client_id
             FROM jobs
         """)
-        
-        # Update the new table with the converted values
+
         for job_id, data in job_data.items():
             cursor.execute(
                 "UPDATE jobs_new SET paper_size = %s, paper_gsm = %s, paper_type = %s WHERE id = %s",
-                [data['paper_size'], data['paper_gsm'], data['paper_type'], job_id]
+                [data['paper_size'], data['paper_gsm'], data['paper_type'], job_id],
             )
-        
-        # Drop old table and rename new table
+
         cursor.execute("DROP TABLE jobs")
         cursor.execute("ALTER TABLE jobs_new RENAME TO jobs")
-        
-        # Drop lookup tables
-        cursor.execute("DROP TABLE paper_sizes")
-        cursor.execute("DROP TABLE paper_gsm")
-        cursor.execute("DROP TABLE paper_types")
+
+        for table_name in ('paper_sizes', 'paper_gsm', 'paper_types'):
+            if _table_exists(cursor, table_name):
+                cursor.execute(f"DROP TABLE {table_name}")
 
 
 class Migration(migrations.Migration):

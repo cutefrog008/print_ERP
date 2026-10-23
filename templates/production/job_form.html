@@ -7,6 +7,9 @@
     <div class="col">
         <h2>{{ job.pk|yesno:"Edit Job,Add Job" }}</h2>
     </div>
+    <div class="col text-end">
+        <a href="{% if client_pk %}{% url 'client_detail' client_pk %}{% else %}{% url 'job_list' %}{% endif %}" class="btn btn-secondary">← Back</a>
+    </div>
 </div>
 
 <div class="card">
@@ -30,19 +33,31 @@
             </div>
             <div class="row">
                 <div class="col-md-4 mb-3">
-                    {{ form.paper_size.label_tag }}
-                    {{ form.paper_size }}
-                    {% if form.paper_size.errors %}<div class="text-danger small">{{ form.paper_size.errors }}</div>{% endif %}
+                    <label>Paper Size</label>
+                    {{ form.paper_size_select }}
+                    {% if form.paper_size_select.errors %}<div class="text-danger small">{{ form.paper_size_select.errors }}</div>{% endif %}
+                    <div id="paper_size_custom_wrap" class="mt-2" style="display:none;">
+                        {{ form.paper_size_custom }}
+                        {% if form.paper_size_custom.errors %}<div class="text-danger small">{{ form.paper_size_custom.errors }}</div>{% endif %}
+                    </div>
                 </div>
                 <div class="col-md-4 mb-3">
-                    {{ form.paper_gsm.label_tag }}
-                    {{ form.paper_gsm }}
-                    {% if form.paper_gsm.errors %}<div class="text-danger small">{{ form.paper_gsm.errors }}</div>{% endif %}
+                    <label>Paper GSM</label>
+                    {{ form.paper_gsm_select }}
+                    {% if form.paper_gsm_select.errors %}<div class="text-danger small">{{ form.paper_gsm_select.errors }}</div>{% endif %}
+                    <div id="paper_gsm_custom_wrap" class="mt-2" style="display:none;">
+                        {{ form.paper_gsm_custom }}
+                        {% if form.paper_gsm_custom.errors %}<div class="text-danger small">{{ form.paper_gsm_custom.errors }}</div>{% endif %}
+                    </div>
                 </div>
                 <div class="col-md-4 mb-3">
-                    {{ form.paper_type.label_tag }}
-                    {{ form.paper_type }}
-                    {% if form.paper_type.errors %}<div class="text-danger small">{{ form.paper_type.errors }}</div>{% endif %}
+                    <label>Paper Type</label>
+                    {{ form.paper_type_select }}
+                    {% if form.paper_type_select.errors %}<div class="text-danger small">{{ form.paper_type_select.errors }}</div>{% endif %}
+                    <div id="paper_type_custom_wrap" class="mt-2" style="display:none;">
+                        {{ form.paper_type_custom }}
+                        {% if form.paper_type_custom.errors %}<div class="text-danger small">{{ form.paper_type_custom.errors }}</div>{% endif %}
+                    </div>
                 </div>
             </div>
             <div class="row">
@@ -97,51 +112,24 @@
     </div>
 </div>
 
-<datalist id="paper_size_options">
-    <option value="11.5x18">
-    <option value="12x18">
-    <option value="12.5x18">
-    <option value="12x23">
-    <option value="12x25">
-    <option value="13x19">
-    <option value="14x22">
-    <option value="15x20">
-    <option value="18x22">
-    <option value="18x23">
-    <option value="18x25">
-    <option value="20x30">
-</datalist>
-
-<datalist id="paper_gsm_options">
-    <option value="54">
-    <option value="58">
-    <option value="64">
-    <option value="70">
-    <option value="75">
-    <option value="80">
-    <option value="90">
-    <option value="100">
-    <option value="120">
-    <option value="128">
-    <option value="170">
-    <option value="210">
-    <option value="250">
-    <option value="300">
-    <option value="350">
-</datalist>
-
-<datalist id="paper_type_options">
-    <option value="Art Paper">
-    <option value="Matte">
-    <option value="Maflito">
-    <option value="Gum Sheet">
-    <option value="Art Card">
-    <option value="Duplex">
-    <option value="SBS">
-</datalist>
-
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    function setupCustomToggle(selectId, customWrapId) {
+        const select = document.getElementById(selectId);
+        const customWrap = document.getElementById(customWrapId);
+        if (!select || !customWrap) return;
+
+        function toggle() {
+            customWrap.style.display = (select.value === 'custom') ? 'block' : 'none';
+        }
+        select.addEventListener('change', toggle);
+        toggle();
+    }
+
+    setupCustomToggle('id_paper_size_select', 'paper_size_custom_wrap');
+    setupCustomToggle('id_paper_gsm_select', 'paper_gsm_custom_wrap');
+    setupCustomToggle('id_paper_type_select', 'paper_type_custom_wrap');
+
     const numberOfSheetsInput = document.getElementById('id_number_of_sheets');
     const printingTypeSelect = document.getElementById('id_printing_type');
     const totalSheetsInput = document.getElementById('id_total_sheets');
@@ -162,7 +150,6 @@ document.addEventListener('DOMContentLoaded', function() {
     numberOfSheetsInput.addEventListener('input', calculateTotalSheets);
     printingTypeSelect.addEventListener('change', calculateTotalSheets);
 
-    // Calculate on page load if values exist
     calculateTotalSheets();
 });
 </script>

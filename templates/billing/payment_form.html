@@ -8,6 +8,9 @@
         <h2>Record Payment for {{ invoice.invoice_number }}</h2>
         <p>Outstanding amount: ₹{{ invoice.outstanding_amount }}</p>
     </div>
+    <div class="col text-end">
+        <a href="{% url 'invoice_detail' invoice.pk %}" class="btn btn-secondary">← Back</a>
+    </div>
 </div>
 
 <div class="card">

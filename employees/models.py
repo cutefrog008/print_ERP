@@ -24,4 +24,4 @@ class Employee(models.Model):
         ordering = ['user__first_name', 'user__last_name']
     
     def __str__(self):
-        return f"{self.user.get_full_name()}"
+        return self.user.get_full_name() or self.user.username

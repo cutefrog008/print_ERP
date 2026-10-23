@@ -1,0 +1,149 @@
+{% extends 'base.html' %}
+
+{% block title %}Backup Status - Printing ERP{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2>Backup Status</h2>
+        <div class="text-muted small">
+            Admin-only view. Backup location: <code>{{ backup_root }}</code>
+        </div>
+    </div>
+</div>
+
+{% if not cfg_ok %}
+<div class="alert alert-danger">
+    {{ error }}
+</div>
+{% else %}
+
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <div class="h3 mb-1">{{ count_daily }}</div>
+                <div class="text-muted small">Daily Backups</div>
+                <div class="text-xs text-muted">(keep last {{ retention.daily }})</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <div class="h3 mb-1">{{ count_weekly }}</div>
+                <div class="text-muted small">Weekly Backups</div>
+                <div class="text-xs text-muted">(keep last {{ retention.weekly }})</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <div class="h3 mb-1">{{ count_monthly }}</div>
+                <div class="text-muted small">Monthly Backups</div>
+                <div class="text-xs text-muted">(keep last {{ retention.monthly }})</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <div class="h3 mb-1">{{ total_size_h }}</div>
+                <div class="text-muted small">Total Backup Size</div>
+                <div class="text-xs text-muted">{{ count_total }} backup files</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6 mb-3">
+        <div class="card">
+            <div class="card-header">
+                <strong>Latest Backup Status</strong>
+            </div>
+            <div class="card-body">
+                {% if latest.exists %}
+                    <pre class="mb-0 small" style="white-space: pre-wrap;">{{ latest.text }}</pre>
+                {% else %}
+                    <div class="text-muted">No backup has been run yet.</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 mb-3">
+        <div class="card">
+            <div class="card-header">
+                <strong>Configuration</strong>
+            </div>
+            <div class="card-body small">
+                <table class="table table-sm">
+                    <tr><th>Database engine</th><td>{{ db_engine }}</td></tr>
+                    <tr><th>Media root</th><td><code>{{ media_root }}</code></td></tr>
+                    <tr><th>Startup backup delay</th><td>{{ retention.startup_delay_min }} minutes</td></tr>
+                    <tr><th>Min free disk space</th><td>{{ retention.min_free_gb }} GB</td></tr>
+                    <tr><th>Log file</th><td><code>{{ log_file }}</code></td></tr>
+                    <tr><th>Pre-restore safety</th><td>{{ count_pre_restore }} saved copies</td></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <strong>Recent Backups</strong>
+        <span class="text-muted small">(newest first, max 20 shown)</span>
+    </div>
+    <div class="card-body p-0">
+        {% if recent_backups %}
+        <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th><th>File name</th><th>Type</th><th>Modified</th><th>Size</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for b in recent_backups %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td><code class="small">{{ b.name }}</code></td>
+                        <td><span class="badge bg-secondary">{{ b.bucket }}</span></td>
+                        <td>{{ b.mtime }}</td>
+                        <td>{{ b.size_h }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="p-4 text-muted">No backup files yet. Run a manual backup first.</div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <strong>Recent Activity Log (last 50 lines)</strong>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <pre class="mb-0 p-3 small" style="background:#111;color:#eee;max-height:500px;overflow:auto;{% if not log_tail %}opacity:.6;{% endif %}">{% if log_tail %}{{ log_tail|join:"&#10;" }}{% else %}(empty - no backups yet){% endif %}</pre>
+        </div>
+    </div>
+</div>
+
+<div class="alert alert-info">
+    <h5>How to create or restore a backup</h5>
+    <ul class="mb-0">
+        <li><strong>Manual backup:</strong> Double-click <code>D:\PrintingERP\backup_now.bat</code> on the ERP server computer.</li>
+        <li><strong>Restore:</strong> Double-click <code>D:\PrintingERP\restore_erp.bat</code> (interactive, requires confirmation).</li>
+        <li><strong>Automatic (morning):</strong> Runs on server startup after a configurable delay. One backup per day max.</li>
+        <li>Backups are stored <strong>locally on this server</strong> — never exposed over the LAN or to employees via Django URLs.</li>
+    </ul>
+</div>
+
+{% endif %}
+{% endblock %}

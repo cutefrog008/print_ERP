@@ -7,6 +7,9 @@
     <div class="col">
         <h2>{% if item %}Edit Item{% else %}Add Item{% endif %}</h2>
     </div>
+    <div class="col text-end">
+        <a href="{% url 'invoice_detail' invoice.pk %}" class="btn btn-secondary">← Back</a>
+    </div>
 </div>
 
 <div class="card">

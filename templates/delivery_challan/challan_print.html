@@ -4,66 +4,522 @@
 {% block title %}Print {{ challan.challan_number }} - Delivery Challan{% endblock %}
 
 {% block content %}
+
 <style>
-    body { background: #f3f4f6; }
-    @page { size: A4; margin: 14mm; }
-    .challan-page {
-        background: white;
-        padding: 28px 30px;
-        max-width: 210mm;
-        margin: 20px auto;
-        box-shadow: 0 4px 24px rgba(0,0,0,0.1);
+    @page {
+        size: A4 portrait;
+        margin: 0;
+    }
+
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        background: #f3f4f6;
         color: #111;
-        font-family: 'Segoe UI', Helvetica, Arial, sans-serif;
+        font-family: "Segoe UI", Helvetica, Arial, sans-serif;
     }
-    .company-logo {
-        width: 100px; height: 100px; border-radius: 50%;
-        display: flex; align-items: center; justify-content: center;
+
+    .challan-page {
+        background: #fff;
+        width: 210mm;
+        min-height: 297mm;
+        padding: 10mm;
+        margin: 20px auto;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
+        color: #111;
+        overflow: visible;
+        box-sizing: border-box;
+    }
+
+    /* Company header */
+    .challan-page .company-logo {
+        width: 60px;
+        height: 60px;
+        flex: 0 0 60px;
+        border-radius: 50%;
         overflow: hidden;
-        flex-shrink: 0;
-        border: 2px solid #fff;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        border: 1px solid #eee;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
     }
+
     .company-logo img {
+        display: block;
         width: 100%;
         height: 100%;
-        object-fit: cover;
-        display: block;
+        object-fit: contain;
     }
-    .doc-title { font-weight: 800; font-size: 24px; letter-spacing: 1px; color: #0d6efd; }
-    .doc-sub { color: #555; font-size: 14px; }
-    .kv-label { font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 0.5px; }
-    .kv-value { font-size: 15px; font-weight: 600; color: #111; }
-    table.items th {
-        background: #f8f9fa;
-        font-size: 12px;
+
+    .challan-page .d-flex.justify-content-between.align-items-start {
+        gap: 12px;
+    }
+
+    .challan-page .d-flex.gap-3.align-items-center {
+        flex: 1 1 auto;
+        min-width: 0;
+        gap: 10px !important;
+    }
+
+    .challan-page .d-flex.gap-3.align-items-center > div:last-child {
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+
+    .doc-title {
+        font-weight: 800;
+        font-size: 18px;
+        line-height: 1.3;
+        color: #111;
+        letter-spacing: 0.3px;
+    }
+
+    .doc-sub {
+        color: #555;
+        font-size: 11px;
+        line-height: 1.7;
+    }
+
+    .challan-page .text-end {
+        overflow-wrap: anywhere;
+    }
+
+    .kv-label {
+        font-size: 9px;
+        color: #666;
         text-transform: uppercase;
         letter-spacing: 0.5px;
-        color: #444;
-        border-bottom: 2px solid #dee2e6;
     }
-    table.items td { font-size: 13px; vertical-align: top; }
+
+    .kv-value {
+        font-size: 12px;
+        font-weight: 600;
+        color: #111;
+        overflow-wrap: anywhere;
+    }
+
+    /* Client information */
+    .challan-page .row {
+        margin-left: 0;
+        margin-right: 0;
+    }
+
+    .challan-page .row > [class*="col-"] {
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    /* Challan items table */
+    .challan-page table.table.items {
+        width: 100% !important;
+        max-width: 100%;
+        table-layout: fixed;
+        border-collapse: collapse;
+        border-spacing: 0;
+        margin: 0 0 18px !important;
+        font-size: 9px;
+    }
+
+    .challan-page table.items th,
+    .challan-page table.items td {
+        box-sizing: border-box;
+        padding: 7px 3px;
+        vertical-align: middle;
+        white-space: normal !important;
+        overflow: visible;
+        text-overflow: clip;
+        overflow-wrap: anywhere;
+        word-break: normal;
+        line-height: 1.35;
+    }
+
+    .challan-page table.items th {
+        background: #f1f3f5;
+        color: #333;
+        font-size: 8px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0;
+        text-align: left;
+        border-bottom: 1.5px solid #adb5bd;
+    }
+
+    .challan-page table.items td {
+        font-size: 9px;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    /* Numeric columns */
+    .challan-page table.items th:nth-child(9),
+    .challan-page table.items th:nth-child(10),
+    .challan-page table.items th:nth-child(11),
+    .challan-page table.items td:nth-child(9),
+    .challan-page table.items td:nth-child(10),
+    .challan-page table.items td:nth-child(11) {
+        text-align: right;
+        padding-left: 1px;
+        padding-right: 2px;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .challan-page table.items td:nth-child(11) {
+        overflow-wrap: normal;
+        word-break: normal;
+        white-space: nowrap !important;
+        font-size: 8px;
+    }
+
+    .challan-page table.items tfoot td {
+        background: #f0f9ff;
+        font-weight: 700;
+        border-top: 1px solid #adb5bd;
+        border-bottom: 1px solid #dee2e6;
+        padding-top: 9px;
+        padding-bottom: 9px;
+    }
+
+    .challan-page table.items tfoot td:last-child {
+        white-space: nowrap !important;
+        font-size: 10px;
+    }
+
+    /* Signature and footer */
     .sign-box {
         border-top: 1px dashed #999;
-        padding-top: 10px;
-        margin-top: 60px;
+        padding-top: 8px;
+        margin-top: 20px;
         text-align: center;
-        font-size: 12px;
+        font-size: 9px;
         color: #555;
     }
+
+    .challan-page > .text-center.mt-5.text-muted {
+        font-size: 9px !important;
+        line-height: 1.6;
+        overflow-wrap: anywhere;
+    }
+
+    /* Screen preview toolbar */
     .print-toolbar {
-        position: sticky; top: 60px; z-index: 50;
-        background: #111827; color: white;
-        padding: 12px 20px; border-radius: 10px;
-        display: flex; justify-content: space-between; align-items: center;
-        max-width: 210mm; margin: 10px auto;
+        position: sticky;
+        top: 60px;
+        z-index: 50;
+        background: #111827;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        max-width: 210mm;
+        margin: 10px auto;
+        box-sizing: border-box;
     }
-    @media print {
-        body { background: white; }
-        .print-toolbar, nav, .no-print { display: none !important; }
-        .challan-page { box-shadow: none; margin: 0; padding: 8mm; }
+
+    /* Actual browser printing */
+    
+/* Corrected Chrome / Edge print preview */
+@page {
+    size: A4 portrait;
+    margin: 7mm;
+}
+
+@media print {
+    html,
+    body {
+        width: 100% !important;
+        min-width: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #fff !important;
+        color: #111 !important;
+        overflow: visible !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
     }
+
+    .print-toolbar,
+    .no-print,
+    nav,
+    .navbar,
+    .btn-group,
+    .alert {
+        display: none !important;
+    }
+
+    /* Remove Bootstrap container restrictions */
+    body > *,
+    body .container,
+    body .container-fluid,
+    body main,
+    body .content,
+    body .content-wrapper {
+        max-width: none !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: visible !important;
+        transform: none !important;
+    }
+
+    .challan-page {
+        display: block !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        min-height: 0 !important;
+        height: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: 0 !important;
+        box-shadow: none !important;
+        overflow: visible !important;
+        transform: none !important;
+        background: #fff !important;
+    }
+
+    /* Compact company header */
+    .challan-page > .d-flex.justify-content-between.align-items-start {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 5mm !important;
+        padding-bottom: 4mm !important;
+        margin-bottom: 5mm !important;
+        width: 100% !important;
+    }
+
+    .challan-page .d-flex.gap-3.align-items-center {
+        display: flex !important;
+        flex: 1 1 72% !important;
+        width: auto !important;
+        min-width: 0 !important;
+        gap: 3mm !important;
+    }
+
+    .challan-page .company-logo {
+        flex: 0 0 17mm !important;
+        width: 17mm !important;
+        height: 17mm !important;
+    }
+
+    .challan-page .d-flex.gap-3.align-items-center > div:last-child {
+        flex: 1 1 auto !important;
+        min-width: 0 !important;
+        overflow-wrap: break-word !important;
+        word-break: normal !important;
+    }
+
+    .challan-page .d-flex.gap-3.align-items-center > div:last-child > div:first-child {
+        font-size: 15px !important;
+        line-height: 1.25 !important;
+        white-space: nowrap !important;
+    }
+
+    .challan-page .d-flex.gap-3.align-items-center > div:last-child > div:last-child {
+        font-size: 8px !important;
+        line-height: 1.5 !important;
+        overflow-wrap: anywhere !important;
+    }
+
+    .challan-page .text-end {
+        flex: 0 0 27% !important;
+        min-width: 0 !important;
+        overflow-wrap: normal !important;
+        word-break: normal !important;
+    }
+
+    .challan-page .doc-title {
+        font-size: 13px !important;
+        line-height: 1.3 !important;
+        overflow-wrap: normal !important;
+    }
+
+    .challan-page .doc-sub {
+        font-size: 9px !important;
+        line-height: 1.6 !important;
+    }
+
+    /* Client box */
+    .challan-page .row {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        width: 100% !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
+
+    .challan-page .row > [class*="col-"] {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }
+
+    /* Fit all 11 columns inside the printable width */
+    .challan-page table.table.items {
+        display: table !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        table-layout: fixed !important;
+        border-collapse: collapse !important;
+        border-spacing: 0 !important;
+        margin: 0 0 5mm !important;
+        font-size: 7px !important;
+        page-break-inside: auto !important;
+        break-inside: auto !important;
+    }
+
+    .challan-page table.items th,
+    .challan-page table.items td {
+        padding: 5px 2px !important;
+        font-size: 7px !important;
+        line-height: 1.3 !important;
+        vertical-align: middle !important;
+        white-space: normal !important;
+        overflow: hidden !important;
+        overflow-wrap: anywhere !important;
+        word-break: normal !important;
+        text-overflow: clip !important;
+        box-sizing: border-box !important;
+    }
+
+    .challan-page table.items th {
+        font-size: 6.5px !important;
+        font-weight: 700 !important;
+        text-align: center !important;
+        background: #f1f3f5 !important;
+        border-bottom: 1px solid #adb5bd !important;
+    }
+
+    .challan-page table.items td {
+        border-bottom: 1px solid #ddd !important;
+    }
+
+    /* Numerical columns */
+    .challan-page table.items th:nth-child(9),
+    .challan-page table.items th:nth-child(10),
+    .challan-page table.items th:nth-child(11),
+    .challan-page table.items td:nth-child(9),
+    .challan-page table.items td:nth-child(10),
+    .challan-page table.items td:nth-child(11) {
+        text-align: right !important;
+        padding-left: 1px !important;
+        padding-right: 1px !important;
+        font-variant-numeric: tabular-nums !important;
+    }
+
+    .challan-page table.items td:nth-child(11),
+    .challan-page table.items tfoot td:last-child {
+        white-space: nowrap !important;
+        overflow-wrap: normal !important;
+        word-break: normal !important;
+        font-size: 7px !important;
+    }
+
+    .challan-page table.items tfoot {
+        display: table-row-group !important;
+    }
+
+    .challan-page table.items tfoot td {
+        padding-top: 7px !important;
+        padding-bottom: 7px !important;
+        font-weight: 700 !important;
+        background: #f0f9ff !important;
+    }
+
+    .challan-page table.items thead {
+        display: table-header-group !important;
+    }
+
+    .challan-page table.items tr {
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+    }
+
+    /* Signature and footer */
+    .challan-page .sign-box {
+        margin-top: 10mm !important;
+        padding-top: 5px !important;
+        font-size: 8px !important;
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+    }
+
+    .challan-page > .text-center.mt-5.text-muted {
+        margin-top: 8mm !important;
+        padding-top: 5px !important;
+        font-size: 7px !important;
+        line-height: 1.5 !important;
+        overflow-wrap: anywhere !important;
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+    }
+
+    a {
+        color: inherit !important;
+        text-decoration: none !important;
+    }
+}
+
+
+    /* Smaller screens: keep the A4 preview usable */
+    @media screen and (max-width: 800px) {
+        .challan-page {
+            transform-origin: top left;
+            margin: 10px 0;
+        }
+
+        .print-toolbar {
+            position: static;
+            margin: 10px;
+            flex-wrap: wrap;
+        }
+    }
+    
+.challan-page table.items th:nth-child(1),
+.challan-page table.items td:nth-child(1) { width: 3%; }
+
+.challan-page table.items th:nth-child(2),
+.challan-page table.items td:nth-child(2) { width: 8%; }
+
+.challan-page table.items th:nth-child(3),
+.challan-page table.items td:nth-child(3) { width: 12%; }
+
+.challan-page table.items th:nth-child(4),
+.challan-page table.items td:nth-child(4) { width: 9%; }
+
+.challan-page table.items th:nth-child(5),
+.challan-page table.items td:nth-child(5) { width: 5%; }
+
+.challan-page table.items th:nth-child(6),
+.challan-page table.items td:nth-child(6) { width: 8%; }
+
+.challan-page table.items th:nth-child(7),
+.challan-page table.items td:nth-child(7) { width: 7%; }
+
+.challan-page table.items th:nth-child(8),
+.challan-page table.items td:nth-child(8) { width: 7%; }
+
+.challan-page table.items th:nth-child(9),
+.challan-page table.items td:nth-child(9) { width: 10%; }
+
+.challan-page table.items th:nth-child(10),
+.challan-page table.items td:nth-child(10) { width: 12%; }
+
+.challan-page table.items th:nth-child(11),
+.challan-page table.items td:nth-child(11) { width: 19%; }
+
+@media print {
+    .challan-page table.items th,
+    .challan-page table.items td {
+        overflow-wrap: anywhere !important;
+    }
+}
+
 </style>
+
 
 <div class="print-toolbar no-print">
     <div>
@@ -72,7 +528,10 @@
     </div>
     <div class="d-flex gap-2">
         <a href="{% url 'delivery_challan:challan_detail' challan.pk %}" class="btn btn-outline-light btn-sm">← Back</a>
-        <button class="btn btn-warning btn-sm" onclick="window.print()">Print</button>
+        <button class="btn btn-info btn-sm"
+                onclick="window.print()">
+            Print / Save as PDF
+        </button>
         <button class="btn btn-info btn-sm" onclick="window.print()">Export PDF</button>
     </div>
 </div>
@@ -104,51 +563,35 @@
         <div class="col-md-6">
             <div style="border:1px solid #e5e7eb; border-radius:8px; padding:14px 16px; height:100%; background:#fafafa;">
                 <div class="kv-label mb-1">Client</div>
-                {% if challan.client.company %}
-                <div class="kv-value mb-2">{{ challan.client.company }}</div>{% endif %}
+                {% if challan.client.name %}
+                <div class="kv-value mb-2">{{ challan.client.name }}</div>{% endif %}
                 {% if challan.client.gst_number %}
                 <div class="small text-muted">GST: {{ challan.client.gst_number }}</div>{% endif %}
-                <div class="small">{{ challan.client.mobile_number }}</div>
                 {% if challan.client.address %}
                 <div class="small text-muted mt-2">{{ challan.client.address }}, {{ challan.client.city|default:"" }} {{ challan.client.pincode|default:"" }}</div>
-                {% endif %}
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div style="border:1px solid #e5e7eb; border-radius:8px; padding:14px 16px; height:100%;">
-                <div class="kv-label mb-1">Client Details</div>
-                <div class="kv-value">
-                    <div>Mobile: {{ challan.client.mobile_number|default:"-" }}</div>
-                    {% if challan.client.contact_person %}
-                    <div>Contact: {{ challan.client.contact_person }}</div>
-                    {% endif %}
-                </div>
-                {% if challan.remarks %}
-                <div class="mt-2">
-                    <span class="kv-label d-block">Remarks</span>
-                    <span class="kv-value" style="white-space: pre-wrap;">{{ challan.remarks }}</span>
-                </div>
                 {% endif %}
             </div>
         </div>
     </div>
 
     <table class="table items mb-4">
+        
         <thead>
             <tr>
-                <th style="width:36px;">#</th>
-                <th>Job #</th>
-                <th>Job Name</th>
-                <th>Paper</th>
-                <th>GSM</th>
-                <th>Type</th>
-                <th>Color</th>
-                <th>Print</th>
-                <th class="text-end">Qty (Sheets)</th>
-                <th class="text-end">Total Printing</th>
-                <th class="text-end">Amount</th>
+                <th style="width:3%">#</th>
+                <th style="width:8%">Job #</th>
+                <th style="width:15%">Job Name</th>
+                <th style="width:10%">Paper</th>
+                <th style="width:5%">GSM</th>
+                <th style="width:9%">Type</th>
+                <th style="width:8%">Color</th>
+                <th style="width:8%">Print</th>
+                <th style="width:9%" class="text-end">Qty (Sheets)</th>
+                <th style="width:9%" class="text-end">Total Printing</th>
+                <th style="width:16%" class="text-end">Amount (₹)</th>
             </tr>
         </thead>
+
         <tbody>
             {% for item in items %}
             <tr>
@@ -171,7 +614,7 @@
                 <td colspan="8" class="text-end fw-bold">TOTALS →</td>
                 <td class="text-end fw-bold"></td>
                 <td class="text-end fw-bold"></td>
-                <td class="text-end fw-bold" style="font-size:16px;">₹{{ challan.total_cost }}</td>
+                <td class="text-end fw-bold" style="font-size:14px;">₹{{ challan.total_cost }}</td>
             </tr>
         </tfoot>
     </table>

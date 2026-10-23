@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models.functions import Lower
 from django.utils import timezone
 
 
@@ -12,7 +13,7 @@ class Client(models.Model):
     name = models.CharField(max_length=255, verbose_name="Client Name")
     company = models.CharField(max_length=255, blank=True, null=True, verbose_name="Company Name")
     contact_person = models.CharField(max_length=255, blank=True, null=True, verbose_name="Contact Person")
-    mobile_number = models.CharField(max_length=20, verbose_name="Mobile Number")
+    mobile_number = models.CharField(max_length=20, blank=True, null=True, verbose_name="Mobile Number")
     whatsapp_number = models.CharField(max_length=20, blank=True, null=True, verbose_name="WhatsApp Number")
     email = models.EmailField(blank=True, null=True, verbose_name="Email")
     gst_number = models.CharField(max_length=50, blank=True, null=True, verbose_name="GST Number")
@@ -41,7 +42,7 @@ class Client(models.Model):
     
     class Meta:
         db_table = 'clients'
-        ordering = ['-created_at']
+        ordering = [Lower('name')]
     
     def __str__(self):
         return f"{self.name} - {self.company if self.company else ''}"

@@ -14,48 +14,55 @@ def attendance_list(request):
     if request.user.role not in ['admin', 'manager']:
         messages.error(request, 'You do not have permission to view this page')
         return redirect('dashboard')
-    
-    # Get filter parameters
+
     employee_id = request.GET.get('employee')
     month = request.GET.get('month')
     year = request.GET.get('year')
-    
-    # Default to current month
+
     today = date.today()
-    if not month:
+    try:
+        month = int(month) if month else today.month
+        if month < 1 or month > 12:
+            month = today.month
+    except (ValueError, TypeError):
         month = today.month
-    if not year:
+    try:
+        year = int(year) if year else today.year
+        if year < 2000 or year > 2100:
+            year = today.year
+    except (ValueError, TypeError):
         year = today.year
-    
-    # Build date range for the selected month
+
     from calendar import monthrange
-    start_date = date(int(year), int(month), 1)
-    end_date = date(int(year), int(month), monthrange(int(year), int(month))[1])
-    
-    # Filter attendances for the selected month
+    start_date = date(year, month, 1)
+    end_date = date(year, month, monthrange(year, month)[1])
+
     attendances = Attendance.objects.filter(date__range=[start_date, end_date]).order_by('-date')
-    
-    # Filter by employee if selected
+
     selected_employee = None
     total_overtime = None
     total_leave_days = None
     if employee_id:
-        attendances = attendances.filter(employee_id=employee_id)
-        selected_employee = Employee.objects.get(id=employee_id)
-        
-        # Calculate total overtime
-        total_overtime = timedelta(0)
-        for attendance in attendances:
-            if attendance.overtime:
-                total_overtime += attendance.overtime
-        
-        # Count total leave days
-        total_leave_days = attendances.filter(status='leave').count()
-    
-    # Get all employees for the dropdown
+        try:
+            employee_id = int(employee_id)
+        except (ValueError, TypeError):
+            employee_id = None
+        if employee_id:
+            attendances = attendances.filter(employee_id=employee_id)
+            try:
+                selected_employee = Employee.objects.get(id=employee_id)
+            except Employee.DoesNotExist:
+                selected_employee = None
+
+            total_overtime = timedelta(0)
+            for attendance in attendances:
+                if attendance.overtime:
+                    total_overtime += attendance.overtime
+
+            total_leave_days = attendances.filter(status='leave').count()
+
     employees = Employee.objects.filter(status='active')
-    
-    # Generate month options (last 12 months + current)
+
     month_options = []
     for i in range(12):
         month_date = today.replace(day=1) - timedelta(days=i*30)
@@ -64,7 +71,7 @@ def attendance_list(request):
             'year': month_date.year,
             'label': month_date.strftime('%B %Y')
         })
-    
+
     return render(request, 'attendance/attendance_list.html', {
         'attendances': attendances,
         'employees': employees,
@@ -103,30 +110,33 @@ def my_attendance(request):
         messages.error(request, 'You do not have permission to view this page')
         return redirect('dashboard')
     employee = request.user.employee_profile
-    
-    # Get filter parameters
+
     month = request.GET.get('month')
     year = request.GET.get('year')
-    
-    # Default to current month
+
     today = date.today()
-    if not month:
+    try:
+        month = int(month) if month else today.month
+        if month < 1 or month > 12:
+            month = today.month
+    except (ValueError, TypeError):
         month = today.month
-    if not year:
+    try:
+        year = int(year) if year else today.year
+        if year < 2000 or year > 2100:
+            year = today.year
+    except (ValueError, TypeError):
         year = today.year
-    
-    # Build date range for the selected month
+
     from calendar import monthrange
-    start_date = date(int(year), int(month), 1)
-    end_date = date(int(year), int(month), monthrange(int(year), int(month))[1])
-    
-    # Filter attendances for the employee in the selected month
+    start_date = date(year, month, 1)
+    end_date = date(year, month, monthrange(year, month)[1])
+
     attendances = Attendance.objects.filter(
         employee=employee,
         date__range=[start_date, end_date]
     ).order_by('-date')
-    
-    # Generate month options (last 12 months + current)
+
     month_options = []
     for i in range(12):
         month_date = today.replace(day=1) - timedelta(days=i*30)
@@ -135,7 +145,7 @@ def my_attendance(request):
             'year': month_date.year,
             'label': month_date.strftime('%B %Y')
         })
-    
+
     return render(request, 'attendance/my_attendance.html', {
         'attendances': attendances,
         'month_options': month_options,
@@ -152,67 +162,72 @@ def attendance_delete_month(request):
     if request.user.role != 'admin':
         messages.error(request, 'Only admin can delete attendance records')
         return redirect('attendance_list')
-    
+
+    def _parse_int(val, default=None, min_val=None, max_val=None):
+        try:
+            v = int(val)
+            if min_val is not None and v < min_val:
+                return default
+            if max_val is not None and v > max_val:
+                return default
+            return v
+        except (ValueError, TypeError):
+            return default
+
     if request.method == 'POST':
-        employee_id = request.POST.get('employee_id')
-        month = request.POST.get('month')
-        year = request.POST.get('year')
-        
+        employee_id = _parse_int(request.POST.get('employee_id'))
+        month = _parse_int(request.POST.get('month'), min_val=1, max_val=12)
+        year = _parse_int(request.POST.get('year'), min_val=2000, max_val=2100)
+
         if not employee_id or not month or not year:
             messages.error(request, 'Invalid parameters')
             return redirect('attendance_list')
-        
+
         employee = get_object_or_404(Employee, id=employee_id)
-        
-        # Build date range for the selected month
+
         from calendar import monthrange
-        start_date = date(int(year), int(month), 1)
-        end_date = date(int(year), int(month), monthrange(int(year), int(month))[1])
-        
-        # Count attendance records to be deleted
+        start_date = date(year, month, 1)
+        end_date = date(year, month, monthrange(year, month)[1])
+
         attendances_to_delete = Attendance.objects.filter(
             employee=employee,
             date__range=[start_date, end_date]
         )
         count = attendances_to_delete.count()
-        
+
         if count == 0:
-            messages.warning(request, f'No attendance records found for {employee.user.get_full_name} in {month}/{year}')
+            messages.warning(request, f'No attendance records found for {employee.user.get_full_name()} in {month}/{year}')
             return redirect('attendance_list')
-        
-        # Delete the attendance records
+
         attendances_to_delete.delete()
-        
-        messages.success(request, f'Successfully deleted {count} attendance records for {employee.user.get_full_name} in {month}/{year}')
+
+        messages.success(request, f'Successfully deleted {count} attendance records for {employee.user.get_full_name()} in {month}/{year}')
         return redirect('attendance_list')
-    
-    # GET request - show confirmation
-    employee_id = request.GET.get('employee')
-    month = request.GET.get('month')
-    year = request.GET.get('year')
-    
+
+    employee_id = _parse_int(request.GET.get('employee'))
+    month = _parse_int(request.GET.get('month'), min_val=1, max_val=12)
+    year = _parse_int(request.GET.get('year'), min_val=2000, max_val=2100)
+
     if not employee_id or not month or not year:
         messages.error(request, 'Invalid parameters')
         return redirect('attendance_list')
-    
+
     employee = get_object_or_404(Employee, id=employee_id)
-    
-    # Build date range for the selected month
+
     from calendar import monthrange
-    start_date = date(int(year), int(month), 1)
-    end_date = date(int(year), int(month), monthrange(int(year), int(month))[1])
-    
-    # Count attendance records to be deleted
+    start_date = date(year, month, 1)
+    end_date = date(year, month, monthrange(year, month)[1])
+
     attendances_to_delete = Attendance.objects.filter(
         employee=employee,
         date__range=[start_date, end_date]
     )
     count = attendances_to_delete.count()
-    
+
     if count == 0:
-        messages.warning(request, f'No attendance records found for {employee.user.get_full_name} in {month}/{year}')
+        messages.warning(request, f'No attendance records found for {employee.user.get_full_name()} in {month}/{year}')
         return redirect('attendance_list')
-    
+
     return render(request, 'attendance/attendance_delete_confirm.html', {
         'employee': employee,
         'month': month,

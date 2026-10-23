@@ -58,15 +58,14 @@ class PaperPricing(models.Model):
                           'paper_type', 'paper_type_custom', 'quantity_min']
     
     def clean(self):
-        # Validate custom fields
         if self.paper_size == 'custom' and not self.paper_size_custom:
             raise ValidationError({'paper_size_custom': 'Custom size is required when "Custom" is selected.'})
-        if self.paper_gsm == 0 and not self.paper_gsm_custom:
-            raise ValidationError({'paper_gsm_custom': 'Custom GSM is required when custom GSM is selected.'})
         if self.paper_type == 'other' and not self.paper_type_custom:
             raise ValidationError({'paper_type_custom': 'Custom type is required when "Other" is selected.'})
-        
-        # Check for overlapping quantity ranges
+
+        if self.quantity_max is not None and self.quantity_max < self.quantity_min:
+            raise ValidationError('Maximum quantity must be greater than or equal to minimum quantity.')
+
         overlapping = PaperPricing.objects.filter(
             client=self.client,
             paper_size=self.paper_size,
@@ -75,9 +74,11 @@ class PaperPricing(models.Model):
             paper_type=self.paper_type,
             paper_type_custom=self.paper_type_custom
         ).exclude(pk=self.pk)
-        
+
         for pricing in overlapping:
-            if self.quantity_min <= pricing.quantity_max and self.quantity_max >= pricing.quantity_min:
+            self_max = self.quantity_max if self.quantity_max is not None else float('inf')
+            pricing_max = pricing.quantity_max if pricing.quantity_max is not None else float('inf')
+            if self.quantity_min <= pricing_max and self_max >= pricing.quantity_min:
                 raise ValidationError('This quantity range overlaps with an existing pricing rule.')
     
     def __str__(self):
@@ -114,14 +115,18 @@ class PrintingPricing(models.Model):
         unique_together = ['client', 'colors', 'quantity_min']
     
     def clean(self):
-        # Check for overlapping quantity ranges
+        if self.quantity_max is not None and self.quantity_max < self.quantity_min:
+            raise ValidationError('Maximum quantity must be greater than or equal to minimum quantity.')
+
         overlapping = PrintingPricing.objects.filter(
             client=self.client,
             colors=self.colors
         ).exclude(pk=self.pk)
-        
+
         for pricing in overlapping:
-            if self.quantity_min <= pricing.quantity_max and self.quantity_max >= pricing.quantity_min:
+            self_max = self.quantity_max if self.quantity_max is not None else float('inf')
+            pricing_max = pricing.quantity_max if pricing.quantity_max is not None else float('inf')
+            if self.quantity_min <= pricing_max and self_max >= pricing.quantity_min:
                 raise ValidationError('This quantity range overlaps with an existing pricing rule.')
     
     def __str__(self):

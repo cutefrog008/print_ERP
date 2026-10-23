@@ -29,7 +29,7 @@ def invoice_create(request):
         if form.is_valid():
             invoice = form.save(commit=False)
             invoice.created_by = request.user
-            invoice.invoice_number = f"INV-{timezone.now().year}-{Invoice.objects.count() + 1:04d}"
+            invoice.invoice_number = Invoice.generate_invoice_number()
             invoice.save()
             messages.success(request, 'Invoice created successfully')
             return redirect('invoice_detail', pk=invoice.pk)

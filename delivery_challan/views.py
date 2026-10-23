@@ -33,7 +33,7 @@ def _snapshot_job(job):
     try:
         if hasattr(job, 'costing') and job.costing:
             cost = job.costing.grand_total
-    except:
+    except (AttributeError, ValueError, TypeError):
         pass
     return {
         'job': job,

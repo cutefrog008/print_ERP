@@ -39,6 +39,22 @@ class Invoice(models.Model):
     def outstanding_amount(self):
         return self.total_amount - self.paid_amount
 
+    @staticmethod
+    def generate_invoice_number():
+        year = timezone.now().year
+        prefix = f"INV-{year}-"
+        last = Invoice.objects.filter(
+            invoice_number__startswith=prefix
+        ).order_by('invoice_number').last()
+        if last:
+            try:
+                seq = int(last.invoice_number.split('-')[-1]) + 1
+            except (ValueError, IndexError):
+                seq = Invoice.objects.filter(invoice_number__startswith=prefix).count() + 1
+        else:
+            seq = 1
+        return f"{prefix}{seq:04d}"
+
     def calculate_totals(self):
         subtotal = sum(item.total for item in self.items.all())
         self.subtotal = subtotal

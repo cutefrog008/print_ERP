@@ -117,7 +117,7 @@ class DeliveryChallanItem(models.Model):
                     costing = getattr(self.job, 'costing', None)
                 if costing:
                     return costing.grand_total
-            except:
+            except (AttributeError, ValueError, TypeError):
                 pass
         if self.manual_cost_snapshot and self.manual_cost_snapshot > 0:
             return self.manual_cost_snapshot
