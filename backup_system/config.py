@@ -57,6 +57,27 @@ ZIP_META_DIR = 'metadata'
 ZIP_META_FILE = 'metadata.json'
 ZIP_DB_NAME = 'db.sqlite3'
 
+# ---------- Email (off-site) delivery ----------
+# After every successful backup the ZIP is emailed to a mailbox so a copy
+# lives off the machine. Credentials are NEVER hard-coded - they come from
+# environment variables that are set once with `setx`:
+#     ERP_SMTP_USER      -> the Gmail address (e.g. myerpbackup@gmail.com)
+#     ERP_SMTP_PASSWORD  -> the Gmail App Password (16 characters)
+EMAIL_ENABLED = os.environ.get('ERP_EMAIL_ENABLED', '1').strip().lower() not in ('0', 'false', 'no')
+
+SMTP_HOST = os.environ.get('ERP_SMTP_HOST', 'smtp.gmail.com')
+SMTP_PORT = int(os.environ.get('ERP_SMTP_PORT', 465))          # 465 = SSL, 587 = STARTTLS
+SMTP_USER = os.environ.get('ERP_SMTP_USER', '').strip()
+SMTP_PASSWORD = os.environ.get('ERP_SMTP_PASSWORD', '').replace(' ', '').strip()
+# Where the mail goes. Empty -> send to self (the SMTP_USER address).
+MAIL_TO = os.environ.get('ERP_MAIL_TO', '').strip() or SMTP_USER
+
+MAIL_SUBJECT_PREFIX = os.environ.get('ERP_MAIL_SUBJECT_PREFIX', 'Printing ERP Backup')
+# Gmail's hard limit is 25 MB; stay well under it.
+EMAIL_MAX_ATTACH_MB = float(os.environ.get('ERP_EMAIL_MAX_MB', 20.0))
+# One email per ZIP - marker file inside the daily dir prevents duplicates.
+EMAIL_MARKER_PREFIX = '.emailed-'
+
 # ---------- Task Scheduler ----------
 TASK_NAME = 'Printing ERP - Morning Backup'
 TASK_DESC = 'Runs Printing ERP morning backup once per day after system startup with configurable delay.'

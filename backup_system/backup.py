@@ -235,6 +235,55 @@ def has_backup_for_date(date_str: str) -> bool:
     return False
 
 
+def latest_backup_time() -> Optional[dt.datetime]:
+    """IST timestamp of the newest backup this system can account for.
+
+    Archive filenames carry their creation time, and every marker records
+    the moment the backup covering that date was taken, so both sources
+    answer "when was this backup made".
+    """
+    newest: Optional[dt.datetime] = None
+
+    def keep(when: Optional[dt.datetime]) -> None:
+        nonlocal newest
+        if when is not None and (newest is None or when > newest):
+            newest = when
+
+    for bucket in (cfg.DAILY_DIR, cfg.WEEKLY_DIR, cfg.MONTHLY_DIR):
+        if not bucket.exists():
+            continue
+        for fp in bucket.glob(f"{cfg.BACKUP_PREFIX}*{cfg.BACKUP_EXT}"):
+            stamp = fp.stem[len(cfg.BACKUP_PREFIX):]
+            try:
+                keep(dt.datetime.strptime(stamp, cfg.BACKUP_DATE_FORMAT).replace(tzinfo=IST))
+            except ValueError:
+                keep(dt.datetime.fromtimestamp(fp.stat().st_mtime, IST))
+
+    if cfg.DAILY_DIR.exists():
+        for fp in cfg.DAILY_DIR.glob(f"{cfg.MARKER_PREFIX}*"):
+            try:
+                keep(dt.datetime.fromisoformat(
+                    fp.read_text(encoding='utf-8').splitlines()[0]).astimezone(IST))
+            except Exception:
+                keep(dt.datetime.fromtimestamp(fp.stat().st_mtime, IST))
+
+    return newest
+
+
+def day_fully_backed_up(date_str: str) -> bool:
+    """True only when a backup was taken AFTER the given IST day ended.
+
+    A backup taken during the day itself (say 15:00) does not contain the
+    rest of that day's work, so the next morning must still create a
+    fresh backup covering the whole day.
+    """
+    newest = latest_backup_time()
+    if newest is None:
+        return False
+    day_end = dt.datetime.fromisoformat(date_str).replace(tzinfo=IST) + dt.timedelta(days=1)
+    return newest >= day_end
+
+
 def build_backup_path(bucket: Path = cfg.DAILY_DIR, when: Optional[dt.datetime] = None) -> Path:
     when = when or now_ist()
     name = f"{cfg.BACKUP_PREFIX}{when.strftime(cfg.BACKUP_DATE_FORMAT)}{cfg.BACKUP_EXT}"
@@ -467,6 +516,16 @@ def create_backup(backup_type: str = 'manual',
                 shutil.rmtree(temp_stage, ignore_errors=True)
             except Exception:
                 pass
+
+    # Off-site copy: email the verified ZIP. Done AFTER the backup is
+    # safely on disk, and wrapped so an email problem can never turn a
+    # good backup into a failure.
+    if success and backup_path is not None:
+        try:
+            import emailer  # local import avoids a circular module import
+            emailer.send_backup_email(backup_path, metadata)
+        except Exception as e:
+            log.error(f"Email delivery step failed: {type(e).__name__}: {e}")
 
     return success, (backup_path if success else None), metadata
 

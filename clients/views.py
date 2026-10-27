@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db import transaction
+from django.db.models import Count, Q
 from datetime import date
 from .models import Client, ClientAuditLog, ClientPayment
 from .forms import ClientForm, ClientPaymentForm
@@ -18,8 +19,19 @@ def client_list(request):
         clients = Client.objects.all()
     else:
         clients = Client.objects.filter(status=status_filter)
-    
-    return render(request, 'clients/client_list.html', {'clients': clients, 'status_filter': status_filter})
+
+    # Clients that still have at least one job NOT yet on a delivery challan.
+    # Creating a challan links the job to it, so the client drops out of this
+    # tab; creating another job for that client brings it back.
+    clients_with_jobs = clients.annotate(
+        pending_job_count=Count('jobs', filter=Q(jobs__delivery_challan__isnull=True))
+    ).filter(pending_job_count__gt=0)
+
+    return render(request, 'clients/client_list.html', {
+        'clients': clients,
+        'clients_with_jobs': clients_with_jobs,
+        'status_filter': status_filter,
+    })
 
 
 @login_required

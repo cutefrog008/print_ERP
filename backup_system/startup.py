@@ -6,10 +6,11 @@ All dates are IST (Asia/Kolkata, UTC+05:30).
 
 What it does:
   1. Works out "yesterday" in IST.
-  2. Checks whether a successful backup exists for that IST day
-     (marker file or matching archive in daily/weekly/monthly).
-  3. If it is missing, creates a verified catch-up backup now and marks
-     the missed day as covered.
+  2. Checks whether a backup was taken AFTER that IST day ended, i.e.
+     one that really contains the whole day's work. A backup made
+     during the day itself does not count.
+  3. If not, creates a verified catch-up backup now and marks the day
+     as covered.
   4. Reports back via exit code whether the platform may start.
 
 Exit codes:
@@ -45,11 +46,14 @@ def check_and_ensure_previous_day() -> int:
     log.info(f"IST now      : {bk.now_ist().strftime('%d-%m-%Y %H:%M:%S')}")
     log.info(f"Previous day : {prev} (IST)")
 
-    if bk.has_backup_for_date(prev):
-        log.info(f"[OK] Backup for {prev} already exists - nothing to create.")
+    if bk.day_fully_backed_up(prev):
+        newest = bk.latest_backup_time()
+        log.info(f"[OK] {prev} is covered by a backup taken after that day "
+                 f"({newest.strftime('%d-%m-%Y %H:%M:%S')} IST) - nothing to create.")
         return 0
 
-    log.warning(f"[MISSING] No backup for {prev} (IST). Creating a catch-up backup now...")
+    log.warning(f"[MISSING] No backup of {prev} (IST) was taken after that day "
+                f"ended. Creating a catch-up backup now...")
     try:
         with bk.BackupLock():
             success, path, _meta = bk.create_backup(

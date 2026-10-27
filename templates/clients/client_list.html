@@ -22,38 +22,88 @@
     </div>
 </div>
 
-<div class="card">
-    <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-hover">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Company</th>
-                        <th>Mobile Number</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for client in clients %}
-                    <tr>
-                        <td>{{ client.name }}</td>
-                        <td>{{ client.company|default:"-" }}</td>
-                        <td>{{ client.mobile_number }}</td>
-                        <td><span class="badge bg-{% if client.status == 'active' %}success{% else %}secondary{% endif %}">{{ client.get_status_display }}</span></td>
-                        <td>
-                            <a href="{% url 'client_detail' client.pk %}" class="btn btn-sm btn-info">View</a>
-                            <a href="{% url 'client_update' client.pk %}" class="btn btn-sm btn-warning">Edit</a>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="5" class="text-center">No clients found</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+<ul class="nav nav-tabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="clients-tab" data-bs-toggle="tab" data-bs-target="#clients-pane" type="button" role="tab" aria-controls="clients-pane" aria-selected="true">Clients</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="jobs-tab" data-bs-toggle="tab" data-bs-target="#jobs-pane" type="button" role="tab" aria-controls="jobs-pane" aria-selected="false">Jobs ({{ clients_with_jobs|length }})</button>
+    </li>
+</ul>
+
+<div class="tab-content mt-3">
+    <div class="tab-pane fade show active" id="clients-pane" role="tabpanel" aria-labelledby="clients-tab">
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Company</th>
+                                <th>Mobile Number</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for client in clients %}
+                            <tr>
+                                <td>{{ client.name }}</td>
+                                <td>{{ client.company|default:"-" }}</td>
+                                <td>{{ client.mobile_number }}</td>
+                                <td><span class="badge bg-{% if client.status == 'active' %}success{% else %}secondary{% endif %}">{{ client.get_status_display }}</span></td>
+                                <td>
+                                    <a href="{% url 'client_detail' client.pk %}" class="btn btn-sm btn-info">View</a>
+                                    <a href="{% url 'client_update' client.pk %}" class="btn btn-sm btn-warning">Edit</a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center">No clients found</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="tab-pane fade" id="jobs-pane" role="tabpanel" aria-labelledby="jobs-tab">
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Company</th>
+                                <th>Mobile Number</th>
+                                <th>Pending Jobs</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for client in clients_with_jobs %}
+                            <tr>
+                                <td>{{ client.name }}</td>
+                                <td>{{ client.company|default:"-" }}</td>
+                                <td>{{ client.mobile_number }}</td>
+                                <td><span class="badge bg-primary">{{ client.pending_job_count }}</span></td>
+                                <td>
+                                    <a href="{% url 'client_detail' client.pk %}" class="btn btn-sm btn-info">View</a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center">No clients with pending jobs</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 </div>

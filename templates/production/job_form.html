@@ -133,6 +133,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const numberOfSheetsInput = document.getElementById('id_number_of_sheets');
     const printingTypeSelect = document.getElementById('id_printing_type');
     const totalSheetsInput = document.getElementById('id_total_sheets');
+   
+    // Types printed on both sides / in two passes: the sheet count is doubled
+    const DOUBLE_SHEET_TYPES = ['lotpot', 'P+P', 'S+P'];
 
     function calculateTotalSheets() {
         const numberOfSheets = parseInt(numberOfSheetsInput.value) || 0;
@@ -140,16 +143,16 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (printingType === 'single') {
             totalSheetsInput.value = numberOfSheets;
-        } else if (printingType === 'front_back') {
+        } else if (DOUBLE_SHEET_TYPES.indexOf(printingType) !== -1) {
             totalSheetsInput.value = numberOfSheets * 2;
         } else {
             totalSheetsInput.value = '';
         }
     }
-
+    
     numberOfSheetsInput.addEventListener('input', calculateTotalSheets);
     printingTypeSelect.addEventListener('change', calculateTotalSheets);
-
+    
     calculateTotalSheets();
 });
 </script>

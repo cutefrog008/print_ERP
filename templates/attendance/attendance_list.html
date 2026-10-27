@@ -4,15 +4,15 @@
 {% block title %}Attendance - Printing ERP{% endblock %}
 
 {% block content %}
-<div class="row mb-4">
-    <div class="col">
-        <h2>Attendance</h2>
+<div class="row mb-4 align-items-center">
+    <div class="col-12 col-md-auto mb-3 mb-md-0">
+        <h2 class="mb-0">Attendance</h2>
     </div>
-    <div class="col text-end">
-        <div class="d-flex justify-content-end gap-2">
+    <div class="col-12 col-md text-md-end">
+        <div class="d-flex flex-wrap justify-content-md-end gap-2">
             <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">← Back</a>
-            <form method="get" class="d-inline-flex gap-2">
-                <select name="employee" class="form-select">
+            <form method="get" class="d-flex flex-wrap gap-2">
+                <select name="employee" class="form-select w-auto flex-grow-1">
                     <option value="">All Employees</option>
                     {% for employee in employees %}
                     <option value="{{ employee.id }}" {% if selected_employee and selected_employee.id == employee.id %}selected{% endif %}>
@@ -20,14 +20,14 @@
                     </option>
                     {% endfor %}
                 </select>
-                <select name="month" class="form-select">
+                <select name="month" class="form-select w-auto flex-grow-1">
                     {% for option in month_options %}
                     <option value="{{ option.month }}" {% if selected_month == option.month and selected_year == option.year %}selected{% endif %}>
                         {{ option.label }}
                     </option>
                     {% endfor %}
                 </select>
-                <select name="year" class="form-select">
+                <select name="year" class="form-select w-auto flex-grow-1">
                     {% for option in month_options %}
                     <option value="{{ option.year }}" {% if selected_year == option.year %}selected{% endif %}>
                         {{ option.year }}

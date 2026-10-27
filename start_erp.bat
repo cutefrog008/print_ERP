@@ -57,6 +57,13 @@ echo [OK] Python: %PYTHON%
 echo.
 
 REM --- Step 1 + 2: previous-day (IST) backup check / catch-up ---
+REM A PC that just woke from sleep can still report the time it went to
+REM sleep for a short while. That would make the check look at the wrong
+REM day, so nudge the clock to sync (best effort) and let it settle first.
+echo [1/3] Syncing the system clock before the backup check...
+w32tm /resync >nul 2>&1
+ping -n 61 127.0.0.1 >nul 2>&1
+echo ----------------------------------------------------------------
 echo [1/3] Checking previous day's backup (IST)...
 echo ----------------------------------------------------------------
 %PYTHON% "%~dp0backup_system\startup.py" check
