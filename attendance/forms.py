@@ -6,15 +6,23 @@ from employees.models import Employee
 
 
 class AttendanceForm(forms.ModelForm):
+    employees = forms.ModelMultipleChoiceField(
+        queryset=Employee.objects.filter(status='active'),
+        widget=forms.CheckboxSelectMultiple,
+        required=True,
+        label="Select Employees"
+    )
+
     class Meta:
         model = Attendance
-        fields = ['employee', 'date', 'time', 'in_time', 'out_time', 'status', 'remarks']
+        fields = ['date', 'time', 'in_time', 'out_time', 'status', 'remarks']
         widgets = {
-            'date': forms.DateInput(attrs={'type': 'date'}),
-            'time': forms.TimeInput(attrs={'type': 'time'}),
-            'in_time': forms.TimeInput(attrs={'type': 'time'}),
-            'out_time': forms.TimeInput(attrs={'type': 'time'}),
-            'remarks': forms.Textarea(attrs={'rows': 3}),
+            'date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'time': forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
+            'in_time': forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
+            'out_time': forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
+            'status': forms.Select(attrs={'class': 'form-select'}),
+            'remarks': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
         }
     
     def __init__(self, *args, **kwargs):

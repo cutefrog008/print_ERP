@@ -87,17 +87,48 @@ def attendance_list(request):
 
 
 @login_required
+@transaction.atomic
 def attendance_create(request):
     if request.user.role not in ['admin', 'manager']:
         messages.error(request, 'You do not have permission to view this page')
         return redirect('dashboard')
+    
     if request.method == 'POST':
         form = AttendanceForm(request.POST)
         if form.is_valid():
-            attendance = form.save(commit=False)
-            attendance.marked_by = request.user
-            attendance.save()
-            messages.success(request, 'Attendance marked successfully')
+            employees = form.cleaned_data.get('employees')
+            attendance_date = form.cleaned_data.get('date')
+            
+            success_count = 0
+            skipped_count = 0
+            
+            for employee in employees:
+                # Check if attendance already exists for this employee and date
+                if Attendance.objects.filter(employee=employee, date=attendance_date).exists():
+                    skipped_count += 1
+                    continue
+                
+                attendance = Attendance(
+                    employee=employee,
+                    date=attendance_date,
+                    time=form.cleaned_data.get('time'),
+                    in_time=form.cleaned_data.get('in_time'),
+                    out_time=form.cleaned_data.get('out_time'),
+                    status=form.cleaned_data.get('status'),
+                    remarks=form.cleaned_data.get('remarks'),
+                    marked_by=request.user
+                )
+                attendance.save()
+                success_count += 1
+            
+            if success_count > 0:
+                msg = f'Attendance marked successfully for {success_count} employee(s).'
+                if skipped_count > 0:
+                    msg += f' Skipped {skipped_count} employee(s) who already had records for this date.'
+                messages.success(request, msg)
+            elif skipped_count > 0:
+                messages.warning(request, f'No records created. All {skipped_count} selected employee(s) already have records for this date.')
+            
             return redirect('attendance_list')
     else:
         form = AttendanceForm()

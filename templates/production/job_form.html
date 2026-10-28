@@ -26,9 +26,19 @@
                     {% if form.client.errors %}<div class="text-danger small">{{ form.client.errors }}</div>{% endif %}
                 </div>
                 <div class="col-md-6 mb-3">
-                    {{ form.job_name.label_tag }}
-                    {{ form.job_name }}
-                    {% if form.job_name.errors %}<div class="text-danger small">{{ form.job_name.errors }}</div>{% endif %}
+                    <label class="form-label d-block">Job Picture</label>
+                    <div id="camera-container" class="mb-2">
+                        <img id="photo-preview" src="" class="img-fluid rounded" style="display:none; border: 1px solid #ddd;">
+                        <div id="photo-size" class="small text-muted mt-1" style="display:none;"></div>
+                    </div>
+                    <div class="w-100">
+                        <input type="file" id="camera-input" accept="image/*" capture="environment" style="display: none;">
+                        <button type="button" id="click-picture" class="btn btn-primary w-100">
+                            <i class="bi bi-camera"></i> Click Picture
+                        </button>
+                    </div>
+                    {{ form.job_image_data }}
+                    {% if form.job_image_data.errors %}<div class="text-danger small">{{ form.job_image_data.errors }}</div>{% endif %}
                 </div>
             </div>
             <div class="row">
@@ -72,9 +82,13 @@
                     {% if form.number_of_sheets.errors %}<div class="text-danger small">{{ form.number_of_sheets.errors }}</div>{% endif %}
                 </div>
                 <div class="col-md-4 mb-3">
-                    {{ form.printing_type.label_tag }}
-                    {{ form.printing_type }}
-                    {% if form.printing_type.errors %}<div class="text-danger small">{{ form.printing_type.errors }}</div>{% endif %}
+                    <label>Printing Type</label>
+                    {{ form.printing_type_select }}
+                    {% if form.printing_type_select.errors %}<div class="text-danger small">{{ form.printing_type_select.errors }}</div>{% endif %}
+                    <div id="printing_type_custom_wrap" class="mt-2" style="display:none;">
+                        {{ form.printing_type_custom }}
+                        {% if form.printing_type_custom.errors %}<div class="text-danger small">{{ form.printing_type_custom.errors }}</div>{% endif %}
+                    </div>
                 </div>
                 <div class="col-md-4 mb-3">
                     {{ form.total_sheets.label_tag }}
@@ -129,6 +143,57 @@ document.addEventListener('DOMContentLoaded', function() {
     setupCustomToggle('id_paper_size_select', 'paper_size_custom_wrap');
     setupCustomToggle('id_paper_gsm_select', 'paper_gsm_custom_wrap');
     setupCustomToggle('id_paper_type_select', 'paper_type_custom_wrap');
+    setupCustomToggle('id_printing_type', 'printing_type_custom_wrap');
+
+    // Camera/Picture functionality
+    const cameraInput = document.getElementById('camera-input');
+    const clickPictureBtn = document.getElementById('click-picture');
+    const photoPreview = document.getElementById('photo-preview');
+    const photoSize = document.getElementById('photo-size');
+    const imageDataInput = document.getElementById('id_job_image_data');
+
+    clickPictureBtn.addEventListener('click', function() {
+        cameraInput.click();
+    });
+
+    function formatBytes(bytes, decimals = 2) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const dm = decimals < 0 ? 0 : decimals;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+    }
+
+    cameraInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const dataUrl = event.target.result;
+                imageDataInput.value = dataUrl;
+                photoPreview.src = dataUrl;
+                photoPreview.style.display = 'block';
+                
+                // Display size
+                photoSize.textContent = 'Size: ' + formatBytes(file.size);
+                photoSize.style.display = 'block';
+                if (file.size > 10 * 1024 * 1024) {
+                    photoSize.classList.remove('text-muted');
+                    photoSize.classList.add('text-danger');
+                    photoSize.textContent += ' (Exceeds 10MB limit!)';
+                } else {
+                    photoSize.classList.remove('text-danger');
+                    photoSize.classList.add('text-muted');
+                }
+
+                clickPictureBtn.innerHTML = '<i class="bi bi-camera"></i> Change Picture';
+                clickPictureBtn.classList.remove('btn-primary');
+                clickPictureBtn.classList.add('btn-outline-primary');
+            };
+            reader.readAsDataURL(file);
+        }
+    });
 
     const numberOfSheetsInput = document.getElementById('id_number_of_sheets');
     const printingTypeSelect = document.getElementById('id_printing_type');
@@ -143,10 +208,17 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (printingType === 'single') {
             totalSheetsInput.value = numberOfSheets;
+            totalSheetsInput.readOnly = true;
         } else if (DOUBLE_SHEET_TYPES.indexOf(printingType) !== -1) {
             totalSheetsInput.value = numberOfSheets * 2;
+            totalSheetsInput.readOnly = true;
+        } else if (printingType === 'custom') {
+            // Unknown type, so the total cannot be worked out here:
+            // let the operator type it in themselves.
+            totalSheetsInput.readOnly = false;
         } else {
             totalSheetsInput.value = '';
+            totalSheetsInput.readOnly = true;
         }
     }
     

@@ -24,7 +24,22 @@
 </div>
 
 <div class="row">
-    <div class="col-md-6">
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-body text-center">
+                <h5 class="card-title">Job Picture</h5>
+                {% if job.job_image %}
+                <img src="{{ job.job_image.url }}" class="img-fluid rounded" style="max-height: 400px; cursor: pointer;" data-bs-toggle="modal" data-bs-target="#imageModal">
+                <div class="small text-muted mt-2">Size: {{ job.job_image.size|filesizeformat }}</div>
+                {% else %}
+                <div class="bg-light d-flex align-items-center justify-content-center rounded" style="height: 200px;">
+                    <span class="text-muted">No picture available</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-8">
         <div class="card">
             <div class="card-body">
                 <h5 class="card-title">Production Details</h5>
@@ -53,7 +68,7 @@
     </div>
     
     {% if user.role == 'admin' %}
-    <div class="col-md-6">
+    <div class="col-md-12 mt-4">
         <div class="card">
             <div class="card-body">
                 <h5 class="card-title">Job Costing</h5>
@@ -119,6 +134,23 @@
             </div>
         </div>
     </div>
+</div>
+{% endif %}
+
+{% if job.job_image %}
+<!-- Image Modal -->
+<div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="imageModalLabel">{{ job.job_name }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body text-center">
+        <img src="{{ job.job_image.url }}" class="img-fluid rounded">
+      </div>
+    </div>
+  </div>
 </div>
 {% endif %}
 {% endblock %}

@@ -77,6 +77,7 @@ class Job(models.Model):
 
     client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name='jobs')
     job_name = models.CharField(max_length=255, blank=True, default="")
+    job_image = models.ImageField(upload_to='job_images/', null=True, blank=True)
     paper_size = models.CharField(max_length=100)
     paper_gsm = models.IntegerField()
     paper_type = models.CharField(max_length=100)

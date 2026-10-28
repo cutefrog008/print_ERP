@@ -3,10 +3,18 @@ from django.forms import formset_factory
 from .models import Job, JobCosting, JobAdditionalCharge
 
 
+import io
+from PIL import Image
+from django.core.files.base import ContentFile
+import base64
+
 class JobForm(forms.ModelForm):
     PAPER_SIZE_SELECT_CHOICES = Job.PAPER_SIZE_CHOICES + (('custom', 'Custom...'),)
     PAPER_GSM_SELECT_CHOICES = Job.PAPER_GSM_CHOICES + (('custom', 'Custom...'),)
     PAPER_TYPE_SELECT_CHOICES = Job.PAPER_TYPE_CHOICES + (('custom', 'Custom...'),)
+    PRINTING_TYPE_SELECT_CHOICES = Job.PRINTING_TYPE_CHOICES + (('custom', 'Custom...'),)
+
+    job_image_data = forms.CharField(widget=forms.HiddenInput(), required=False)
 
     paper_size_select = forms.ChoiceField(
         choices=PAPER_SIZE_SELECT_CHOICES,
@@ -40,15 +48,24 @@ class JobForm(forms.ModelForm):
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter custom paper type'})
     )
 
+    printing_type_select = forms.ChoiceField(
+        choices=PRINTING_TYPE_SELECT_CHOICES,
+        required=False,
+        widget=forms.Select(attrs={'class': 'form-select', 'id': 'id_printing_type', 'data-toggle-field': 'printing_type_custom'})
+    )
+    printing_type_custom = forms.CharField(
+        max_length=100,
+        required=False,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter custom printing type'})
+    )
+
     class Meta:
         model = Job
-        fields = ['client', 'job_name', 'number_of_sheets', 'printing_colors', 'printing_type', 'total_sheets', 'machine', 'operator', 'remarks']
+        fields = ['client', 'number_of_sheets', 'printing_colors', 'total_sheets', 'machine', 'operator', 'remarks']
         widgets = {
             'client': forms.Select(attrs={'class': 'form-select'}),
-            'job_name': forms.TextInput(attrs={'class': 'form-control'}),
             'number_of_sheets': forms.NumberInput(attrs={'class': 'form-control', 'id': 'id_number_of_sheets'}),
             'printing_colors': forms.Select(attrs={'class': 'form-select'}),
-            'printing_type': forms.Select(attrs={'class': 'form-select', 'id': 'id_printing_type'}),
             'total_sheets': forms.NumberInput(attrs={'class': 'form-control', 'readonly': True, 'id': 'id_total_sheets'}),
             'machine': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. Heidelberg, Offset 1, etc.'}),
             'operator': forms.Select(attrs={'class': 'form-select'}),
@@ -75,6 +92,7 @@ class JobForm(forms.ModelForm):
         preset_sizes = [c[0] for c in Job.PAPER_SIZE_CHOICES]
         preset_gsms = [str(c[0]) for c in Job.PAPER_GSM_CHOICES]
         preset_types = [c[0] for c in Job.PAPER_TYPE_CHOICES]
+        preset_printing_types = [c[0] for c in Job.PRINTING_TYPE_CHOICES]
 
         if instance and instance.pk:
             if instance.paper_size in preset_sizes:
@@ -95,6 +113,12 @@ class JobForm(forms.ModelForm):
                 self.fields['paper_type_select'].initial = 'custom'
                 self.fields['paper_type_custom'].initial = instance.paper_type
 
+            if instance.printing_type in preset_printing_types:
+                self.fields['printing_type_select'].initial = instance.printing_type
+            else:
+                self.fields['printing_type_select'].initial = 'custom'
+                self.fields['printing_type_custom'].initial = instance.printing_type
+
             self.fields['status'] = forms.ChoiceField(
                 choices=Job.STATUS_CHOICES,
                 widget=forms.Select(attrs={'class': 'form-select'})
@@ -103,9 +127,26 @@ class JobForm(forms.ModelForm):
             self.fields['paper_size_select'].initial = preset_sizes[0] if preset_sizes else ''
             self.fields['paper_gsm_select'].initial = preset_gsms[0] if preset_gsms else ''
             self.fields['paper_type_select'].initial = preset_types[0] if preset_types else ''
+            self.fields['printing_type_select'].initial = preset_printing_types[0] if preset_printing_types else ''
 
     def clean(self):
         cleaned_data = super().clean()
+
+        # Image validation
+        job_image_data = cleaned_data.get('job_image_data')
+        if job_image_data:
+            try:
+                # Format is data:image/png;base64,xxxx
+                header, data = job_image_data.split(';base64,')
+                decoded_file = base64.b64decode(data)
+                
+                # Check size: 10MB limit
+                if len(decoded_file) > 10 * 1024 * 1024:
+                    self.add_error(None, "Image size exceeds 10MB limit.")
+                
+                cleaned_data['job_image_file'] = decoded_file
+            except Exception as e:
+                self.add_error(None, "Invalid image data.")
 
         paper_size_sel = cleaned_data.get('paper_size_select')
         paper_size_cust = cleaned_data.get('paper_size_custom')
@@ -146,6 +187,18 @@ class JobForm(forms.ModelForm):
         else:
             self.add_error('paper_type_select', 'Please select or enter paper type.')
 
+        printing_type_sel = cleaned_data.get('printing_type_select')
+        printing_type_cust = cleaned_data.get('printing_type_custom')
+        if printing_type_sel == 'custom':
+            if not printing_type_cust:
+                self.add_error('printing_type_custom', 'Please enter custom printing type.')
+            else:
+                cleaned_data['printing_type'] = printing_type_cust.strip()
+        elif printing_type_sel:
+            cleaned_data['printing_type'] = printing_type_sel
+        else:
+            self.add_error('printing_type_select', 'Please select or enter printing type.')
+
         return cleaned_data
 
     def save(self, commit=True):
@@ -153,6 +206,46 @@ class JobForm(forms.ModelForm):
         job.paper_size = self.cleaned_data['paper_size']
         job.paper_gsm = self.cleaned_data['paper_gsm']
         job.paper_type = self.cleaned_data['paper_type']
+        job.printing_type = self.cleaned_data['printing_type']
+
+        # Handle image compression and saving
+        image_file_data = self.cleaned_data.get('job_image_file')
+        if image_file_data:
+            img = Image.open(io.BytesIO(image_file_data))
+            
+            # Convert to RGB if necessary
+            if img.mode in ("RGBA", "P"):
+                img = img.convert("RGB")
+            
+            # 1. Aggressive Resizing: Limit max dimension to 1280px (HD ready)
+            # This significantly reduces file size while keeping text readable.
+            max_size = (1280, 1280)
+            img.thumbnail(max_size, Image.Resampling.LANCZOS)
+            
+            # 2. Iterative Compression
+            output = io.BytesIO()
+            quality = 70  # Start with lower initial quality
+            img.save(output, format='JPEG', quality=quality, optimize=True, progressive=True)
+            
+            # Target < 250KB for even faster loading
+            while output.tell() > 250 * 1024 and quality > 20:
+                output = io.BytesIO()
+                quality -= 10
+                img.save(output, format='JPEG', quality=quality, optimize=True, progressive=True)
+            
+            output.seek(0)
+            
+            # Generate filename
+            from django.utils import timezone
+            timestamp = timezone.now().strftime('%Y%m%d_%H%M%S')
+            filename = f"job_{timestamp}.jpg"
+            
+            job.job_image.save(filename, ContentFile(output.read()), save=False)
+            
+            # Set job name if empty
+            if not job.job_name:
+                job.job_name = f"Job_{timestamp}"
+
         if commit:
             job.save()
         return job
