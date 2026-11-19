@@ -190,6 +190,18 @@
                         </td>
                         {% endif %}
                     </tr>
+                    {% if show_breakdown and item.cost_breakdown %}
+                    <tr class="table-light">
+                        <td colspan="{% if is_admin and can_edit %}15{% else %}14{% endif %}">
+                            <div class="d-flex flex-wrap gap-3 small text-muted ps-2">
+                                <span class="fw-semibold text-dark">Cost Details:</span>
+                                {% for label, amount in item.cost_breakdown %}
+                                <span><span class="text-muted">{{ label }}:</span> ₹{{ amount|floatformat:2 }}</span>
+                                {% endfor %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endif %}
                     {% empty %}
                     <tr><td colspan="16" class="text-center py-4 text-muted">No jobs in this challan.</td></tr>
                     {% endfor %}

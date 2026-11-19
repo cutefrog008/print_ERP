@@ -59,15 +59,21 @@ class JobForm(forms.ModelForm):
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter custom printing type'})
     )
 
+    machine = forms.ChoiceField(
+        choices=Job.MACHINE_CHOICES,
+        required=True,
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+
     class Meta:
         model = Job
-        fields = ['client', 'number_of_sheets', 'printing_colors', 'total_sheets', 'machine', 'operator', 'remarks']
+        fields = ['client', 'job_name', 'number_of_sheets', 'printing_colors', 'total_sheets', 'machine', 'operator', 'remarks']
         widgets = {
             'client': forms.Select(attrs={'class': 'form-select'}),
+            'job_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter job name'}),
             'number_of_sheets': forms.NumberInput(attrs={'class': 'form-control', 'id': 'id_number_of_sheets'}),
             'printing_colors': forms.Select(attrs={'class': 'form-select'}),
             'total_sheets': forms.NumberInput(attrs={'class': 'form-control', 'readonly': True, 'id': 'id_total_sheets'}),
-            'machine': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. Heidelberg, Offset 1, etc.'}),
             'operator': forms.Select(attrs={'class': 'form-select'}),
             'remarks': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
         }
@@ -217,20 +223,28 @@ class JobForm(forms.ModelForm):
             if img.mode in ("RGBA", "P"):
                 img = img.convert("RGB")
             
-            # 1. Aggressive Resizing: Limit max dimension to 1280px (HD ready)
-            # This significantly reduces file size while keeping text readable.
-            max_size = (1280, 1280)
+            # 1. Resizing: limit the longest side to 1024px (still sharp on screen)
+            max_size = (1024, 1024)
             img.thumbnail(max_size, Image.Resampling.LANCZOS)
-            
-            # 2. Iterative Compression
+
+            # 2. Iterative Compression: aim for under 100KB.
+            #    First lower the quality, then shrink the resolution if needed.
+            target_bytes = 100 * 1024
+            quality = 65
             output = io.BytesIO()
-            quality = 70  # Start with lower initial quality
             img.save(output, format='JPEG', quality=quality, optimize=True, progressive=True)
-            
-            # Target < 250KB for even faster loading
-            while output.tell() > 250 * 1024 and quality > 20:
+
+            while output.tell() > target_bytes:
+                if quality > 25:
+                    quality -= 10
+                elif img.width > 320 and img.height > 320:
+                    img = img.resize(
+                        (int(img.width * 0.85), int(img.height * 0.85)),
+                        Image.Resampling.LANCZOS
+                    )
+                else:
+                    break  # keep the image legible instead of going smaller
                 output = io.BytesIO()
-                quality -= 10
                 img.save(output, format='JPEG', quality=quality, optimize=True, progressive=True)
             
             output.seek(0)
@@ -254,12 +268,18 @@ class JobForm(forms.ModelForm):
 class JobCostingForm(forms.ModelForm):
     class Meta:
         model = JobCosting
-        fields = ['paper_cost', 'printing_cost', 'plate_cost', 'die_charge', 'lamination_charge', 'packing_charge', 'transport_charge', 'remarks']
+        fields = ['paper_cost', 'printing_cost', 'plate_cost', 'die_charge', 'cutting_charge', 'creasing_charge', 'die_cutting_charge', 'binding_charge', 'pasting_charge', 'calender_patti_charge', 'lamination_charge', 'packing_charge', 'transport_charge', 'remarks']
         widgets = {
             'paper_cost': forms.NumberInput(attrs={'class': 'form-control'}),
             'printing_cost': forms.NumberInput(attrs={'class': 'form-control'}),
             'plate_cost': forms.NumberInput(attrs={'class': 'form-control'}),
             'die_charge': forms.NumberInput(attrs={'class': 'form-control'}),
+            'cutting_charge': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'creasing_charge': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'die_cutting_charge': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'binding_charge': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'pasting_charge': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'calender_patti_charge': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
             'lamination_charge': forms.NumberInput(attrs={'class': 'form-control'}),
             'packing_charge': forms.NumberInput(attrs={'class': 'form-control'}),
             'transport_charge': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
@@ -277,4 +297,4 @@ class JobAdditionalChargeForm(forms.ModelForm):
         }
 
 
-JobAdditionalChargeFormSet = formset_factory(JobAdditionalChargeForm, extra=3, can_delete=True)
+JobAdditionalChargeFormSet = formset_factory(JobAdditionalChargeForm, extra=1, can_delete=True)

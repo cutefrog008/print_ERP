@@ -162,21 +162,45 @@
     </div> -->
 </div>
 
+<div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+    <span class="fw-bold text-muted">Jobs:</span>
+    <form method="get" class="d-flex align-items-center gap-2">
+        <input type="hidden" name="subtab" value="{{ active_subtab }}">
+        <select name="month" class="form-select form-select-sm" style="min-width: 190px;" onchange="this.form.submit()">
+            {% for option in month_options %}
+            <option value="{{ option.value }}" {% if option.value == selected_month %}selected{% endif %}>{{ option.label }}</option>
+            {% endfor %}
+            <option value="all" {% if selected_month == 'all' %}selected{% endif %}>All Months</option>
+        </select>
+        <button type="submit" class="btn btn-sm btn-primary">View</button>
+    </form>
+    {% if selected_month != current_month_value %}
+    <a href="{% url 'client_detail' client.pk %}" class="btn btn-sm btn-outline-secondary">Reset</a>
+    {% endif %}
+    <span class="badge bg-dark">Showing: {{ selected_month_label }}</span>
+</div>
+
 <ul class="nav nav-tabs mb-3" role="tablist">
     <li class="nav-item" role="presentation">
-        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#newjobs"
+        <button class="nav-link {% if active_subtab == 'latest' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#latest"
                 type="button" role="tab">
-            🆕 Latest Jobs <span class="badge bg-danger ms-1">{{ new_jobs|length }}</span>
+            🆕 Latest Jobs <span class="badge bg-danger ms-1">{{ latest_jobs|length }}</span>
         </button>
     </li>
     <li class="nav-item" role="presentation">
-        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#history"
+        <button class="nav-link {% if active_subtab == 'ready' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#ready"
+                type="button" role="tab">
+            💰 Ready for Challan <span class="badge bg-primary ms-1">{{ ready_jobs|length }}</span>
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link {% if active_subtab == 'history' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#history"
                 type="button" role="tab">
             📋 Production History <span class="badge bg-secondary ms-1">{{ history_jobs|length }}</span>
         </button>
     </li>
     <li class="nav-item" role="presentation">
-        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#challans"
+        <button class="nav-link {% if active_subtab == 'challans' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#challans"
                 type="button" role="tab">
             🚚 Delivery Challans <span class="badge bg-info ms-1">{{ challans|length }}</span>
         </button>
@@ -184,17 +208,10 @@
 </ul>
 
 <div class="tab-content">
-    <div class="tab-pane fade show active" id="newjobs" role="tabpanel">
+    <div class="tab-pane fade {% if active_subtab == 'latest' %}show active{% endif %}" id="latest" role="tabpanel">
         <div class="card border-primary">
             <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">🆕 Latest Jobs — Awaiting Delivery Challan</h5>
-                <div>
-                    {% if new_jobs|length > 0 and user.role == 'admin' and client.status == 'active' %}
-                    <a href="{% url 'delivery_challan:challan_create_step2' client.pk %}" class="btn btn-warning btn-sm">
-                        🚚 Create Delivery Challan for These Jobs
-                    </a>
-                    {% endif %}
-                </div>
+                <h5 class="mb-0">🆕 Latest Jobs — No Price Added Yet</h5>
             </div>
             <div class="card-body">
                 <div class="table-responsive">
@@ -216,8 +233,8 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {% for job in new_jobs %}
-                            <tr class="{% if job.status == 'ready_for_challan' %}table-success{% elif job.status == 'pending_costing' %}table-warning{% endif %}">
+                            {% for job in latest_jobs %}
+                            <tr class="{% if job.status == 'pending_costing' %}table-warning{% endif %}">
                                 <!-- <td class="fw-semibold">{{ job.job_number }}</td> -->
                                 <td>{{ job.date }}</td>
                                 <td> <a href="{% url 'job_detail' job.pk %}?client_pk={{ client.pk }}">{{ job.job_name }}</a></td>
@@ -229,15 +246,7 @@
                                 <td style="color: red; font-weight: bold;">{{ job.total_sheets }}</td>
                                 <td>{{ job.operator.user.get_full_name }}</td>
                                 <td>
-                                    {% if job.status == 'ready_for_challan' %}
-                                    <a href="{% url 'delivery_challan:challan_create_step2' client.pk %}">
-                                    {% elif job.status == 'challan_created' %}
                                     <a href="{% url 'job_detail' job.pk %}?client_pk={{ client.pk }}">
-                                    {% elif job.status == 'pending_costing' %}
-                                    <a href="{% url 'job_detail' job.pk %}?client_pk={{ client.pk }}">
-                                    {% else %}
-                                    <a href="{% url 'job_detail' job.pk %}?client_pk={{ client.pk }}">
-                                    {% endif %}
                                         <span class="badge bg-{% if job.status == 'pending_costing' %}warning
                                             {% elif job.status == 'costing_completed' %}info
                                             {% elif job.status == 'ready_for_challan' %}primary
@@ -256,16 +265,16 @@
                                         <span class="text-muted small">Locked</span>
                                         {% endif %}
                                         {% if user.role == 'admin' %}
-                                        <a href="{% url 'job_delete' job.pk %}" class="btn btn-sm btn-danger">Delete</a>
+                                        <a href="{% url 'job_delete' job.pk %}?client_pk={{ client.pk }}&month={{ selected_month }}" class="btn btn-sm btn-danger">Delete</a>
                                         {% endif %}
                                     </div>
                                 </td>
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="10" class="text-center py-5 text-muted">
-                                    <h5 class="mb-2">✅ All jobs have been dispatched</h5>
-                                    <p class="mb-0">No pending jobs. New jobs created for this client will appear here automatically.</p>
+                                <td colspan="11" class="text-center py-5 text-muted">
+                                    <h5 class="mb-2">No un-priced jobs</h5>
+                                    <p class="mb-0">New jobs created for this client will appear here until a price is added.</p>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -276,7 +285,89 @@
         </div>
     </div>
 
-    <div class="tab-pane fade" id="history" role="tabpanel">
+    <div class="tab-pane fade {% if active_subtab == 'ready' %}show active{% endif %}" id="ready" role="tabpanel">
+        <div class="card border-warning">
+            <div class="card-header bg-warning d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">💰 Ready for Challan — Price Added, No Challan Yet</h5>
+                <div>
+                    {% if ready_jobs|length > 0 and user.role == 'admin' and client.status == 'active' %}
+                    <a href="{% url 'delivery_challan:challan_create_step2' client.pk %}" class="btn btn-primary btn-sm">
+                        🚚 Create Delivery Challan for These Jobs
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Date</th>
+                                <th>Job Name</th>
+                                <th>Paper Size</th>
+                                <th>Paper GSM</th>
+                                <th>Colors</th>
+                                <th>Sheets</th>
+                                <th>Type</th>
+                                <th>Total Sheets</th>
+                                <th>Operator</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for job in ready_jobs %}
+                            <tr class="table-success">
+                                <td>{{ job.date }}</td>
+                                <td> <a href="{% url 'job_detail' job.pk %}?client_pk={{ client.pk }}">{{ job.job_name }}</a></td>
+                                <td>{{ job.paper_size }}</td>
+                                <td>{{ job.paper_gsm }}</td>
+                                <td>{{ job.get_printing_colors_display }}</td>
+                                <td>{{ job.number_of_sheets }}</td>
+                                <td>{{ job.get_printing_type_display }}</td>
+                                <td style="color: red; font-weight: bold;">{{ job.total_sheets }}</td>
+                                <td>{{ job.operator.user.get_full_name }}</td>
+                                <td>
+                                    <a href="{% url 'delivery_challan:challan_create_step2' client.pk %}">
+                                        <span class="badge bg-{% if job.status == 'pending_costing' %}warning
+                                            {% elif job.status == 'costing_completed' %}info
+                                            {% elif job.status == 'ready_for_challan' %}primary
+                                            {% elif job.status == 'challan_created' %}success
+                                            {% elif job.status == 'cancelled' %}danger
+                                            {% else %}secondary{% endif %}">
+                                            {{ job.get_status_display }}
+                                        </span>
+                                    </a>
+                                </td>
+                                <td>
+                                    <div class="d-flex gap-1 flex-wrap">
+                                        {% if job.date == today or user.role == 'admin' %}
+                                        <a href="{% url 'job_update' job.pk %}?client_pk={{ client.pk }}" class="btn btn-sm btn-warning">Edit</a>
+                                        {% else %}
+                                        <span class="text-muted small">Locked</span>
+                                        {% endif %}
+                                        {% if user.role == 'admin' %}
+                                        <a href="{% url 'job_delete' job.pk %}?client_pk={{ client.pk }}&month={{ selected_month }}" class="btn btn-sm btn-danger">Delete</a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="11" class="text-center py-5 text-muted">
+                                    <h5 class="mb-2">No jobs ready for challan</h5>
+                                    <p class="mb-0">Jobs appear here once a price has been added.</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="tab-pane fade {% if active_subtab == 'history' %}show active{% endif %}" id="history" role="tabpanel">
         <div class="card">
             <div class="card-header bg-light d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">📋 Production History — Already Dispatched</h5>
@@ -338,8 +429,8 @@
                                 <td>
                                     <div class="d-flex gap-1 flex-wrap">
                                         {% if user.role == 'admin' %}
-                                        <a href="{% url 'job_update' job.pk %}?client_pk={{ client.pk }}" class="btn btn-sm btn-outline-warning">Edit</a>
-                                        <a href="{% url 'job_delete' job.pk %}" class="btn btn-sm btn-outline-danger">Delete</a>
+                                        <a href="{% url 'job_update' job.pk %}?client_pk={{ client.pk }}&month={{ selected_month }}" class="btn btn-sm btn-outline-warning">Edit</a>
+                                        <a href="{% url 'job_delete' job.pk %}?client_pk={{ client.pk }}&month={{ selected_month }}" class="btn btn-sm btn-outline-danger">Delete</a>
                                         {% endif %}
                                     </div>
                                 </td>
@@ -359,7 +450,7 @@
         </div>
     </div>
 
-    <div class="tab-pane fade" id="challans" role="tabpanel">
+    <div class="tab-pane fade {% if active_subtab == 'challans' %}show active{% endif %}" id="challans" role="tabpanel">
         <div class="card">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center mb-3">

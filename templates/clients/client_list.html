@@ -12,27 +12,45 @@
     </div>
 </div>
 
-<div class="row mb-3">
-    <div class="col">
+<div class="row mb-3 g-2 align-items-center">
+    <div class="col-md-auto">
         <div class="btn-group" role="group">
-            <a href="{% url 'client_list' %}?status=active" class="btn {% if status_filter == 'active' %}btn-primary{% else %}btn-outline-primary{% endif %}">Active Clients</a>
-            <a href="{% url 'client_list' %}?status=archived" class="btn {% if status_filter == 'archived' %}btn-primary{% else %}btn-outline-primary{% endif %}">Archived Clients</a>
-            <a href="{% url 'client_list' %}?status=all" class="btn {% if status_filter == 'all' %}btn-primary{% else %}btn-outline-primary{% endif %}">All Clients</a>
+            <a href="{% url 'client_list' %}?status=active{% if search_query %}&q={{ search_query|urlencode }}{% endif %}{% if active_tab != 'clients' %}&tab={{ active_tab }}&month={{ selected_month }}{% endif %}" class="btn {% if status_filter == 'active' %}btn-primary{% else %}btn-outline-primary{% endif %}">Active Clients</a>
+            <a href="{% url 'client_list' %}?status=archived{% if search_query %}&q={{ search_query|urlencode }}{% endif %}{% if active_tab != 'clients' %}&tab={{ active_tab }}&month={{ selected_month }}{% endif %}" class="btn {% if status_filter == 'archived' %}btn-primary{% else %}btn-outline-primary{% endif %}">Archived Clients</a>
+            <a href="{% url 'client_list' %}?status=all{% if search_query %}&q={{ search_query|urlencode }}{% endif %}{% if active_tab != 'clients' %}&tab={{ active_tab }}&month={{ selected_month }}{% endif %}" class="btn {% if status_filter == 'all' %}btn-primary{% else %}btn-outline-primary{% endif %}">All Clients</a>
         </div>
+    </div>
+    <div class="col-md">
+        <form method="get" class="d-flex justify-content-md-end gap-2" role="search">
+            <input type="hidden" name="status" value="{{ status_filter }}">
+            <input type="hidden" name="tab" value="{{ active_tab }}">
+            {% if active_tab != 'clients' %}<input type="hidden" name="month" value="{{ selected_month }}">{% endif %}
+            <input type="search" name="q" value="{{ search_query }}" class="form-control form-control-sm" placeholder="Search by name, company or mobile" style="max-width: 300px;" aria-label="Search clients">
+            <button type="submit" class="btn btn-sm btn-primary">Search</button>
+            {% if search_query %}
+            <a href="{% url 'client_list' %}?status={{ status_filter }}{% if active_tab != 'clients' %}&tab={{ active_tab }}&month={{ selected_month }}{% endif %}" class="btn btn-sm btn-outline-secondary">Clear</a>
+            {% endif %}
+        </form>
     </div>
 </div>
 
 <ul class="nav nav-tabs" role="tablist">
     <li class="nav-item" role="presentation">
-        <button class="nav-link active" id="clients-tab" data-bs-toggle="tab" data-bs-target="#clients-pane" type="button" role="tab" aria-controls="clients-pane" aria-selected="true">Clients</button>
+        <button class="nav-link {% if active_tab == 'clients' %}active{% endif %}" id="clients-tab" data-bs-toggle="tab" data-bs-target="#clients-pane" type="button" role="tab" aria-controls="clients-pane" aria-selected="{% if active_tab == 'clients' %}true{% else %}false{% endif %}">Clients</button>
     </li>
     <li class="nav-item" role="presentation">
-        <button class="nav-link" id="jobs-tab" data-bs-toggle="tab" data-bs-target="#jobs-pane" type="button" role="tab" aria-controls="jobs-pane" aria-selected="false">Jobs ({{ clients_with_jobs|length }})</button>
+        <button class="nav-link {% if active_tab == 'jobs' %}active{% endif %}" id="jobs-tab" data-bs-toggle="tab" data-bs-target="#jobs-pane" type="button" role="tab" aria-controls="jobs-pane" aria-selected="{% if active_tab == 'jobs' %}true{% else %}false{% endif %}">Jobs ({{ clients_with_new_jobs|length }})</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link {% if active_tab == 'ready' %}active{% endif %}" id="ready-tab" data-bs-toggle="tab" data-bs-target="#ready-pane" type="button" role="tab" aria-controls="ready-pane" aria-selected="{% if active_tab == 'ready' %}true{% else %}false{% endif %}">Ready for Challan ({{ clients_ready_for_challan|length }})</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link {% if active_tab == 'challan' %}active{% endif %}" id="challan-tab" data-bs-toggle="tab" data-bs-target="#challan-pane" type="button" role="tab" aria-controls="challan-pane" aria-selected="{% if active_tab == 'challan' %}true{% else %}false{% endif %}">Main Challan ({{ clients_on_challan|length }})</button>
     </li>
 </ul>
 
 <div class="tab-content mt-3">
-    <div class="tab-pane fade show active" id="clients-pane" role="tabpanel" aria-labelledby="clients-tab">
+    <div class="tab-pane fade {% if active_tab == 'clients' %}show active{% endif %}" id="clients-pane" role="tabpanel" aria-labelledby="clients-tab">
         <div class="card">
             <div class="card-body">
                 <div class="table-responsive">
@@ -70,7 +88,26 @@
         </div>
     </div>
 
-    <div class="tab-pane fade" id="jobs-pane" role="tabpanel" aria-labelledby="jobs-tab">
+    <div class="tab-pane fade {% if active_tab == 'jobs' %}show active{% endif %}" id="jobs-pane" role="tabpanel" aria-labelledby="jobs-tab">
+        <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+            <form method="get" class="d-flex flex-wrap align-items-center gap-2" id="month-form-jobs">
+                <input type="hidden" name="tab" value="jobs">
+                <input type="hidden" name="status" value="{{ status_filter }}">
+                <input type="hidden" name="q" value="{{ search_query }}">
+                <label class="fw-bold text-muted mb-0" for="month-filter-jobs">Month:</label>
+                <select name="month" id="month-filter-jobs" class="form-select form-select-sm" style="min-width: 190px;" onchange="this.form.submit()">
+                    {% for option in month_options %}
+                    <option value="{{ option.value }}" {% if option.value == selected_month %}selected{% endif %}>{{ option.label }}</option>
+                    {% endfor %}
+                    <option value="all" {% if selected_month == 'all' %}selected{% endif %}>All Months</option>
+                </select>
+                <button type="submit" class="btn btn-sm btn-primary">View</button>
+            </form>
+            {% if selected_month != current_month_value %}
+            <a href="{% url 'client_list' %}?status={{ status_filter }}&tab=jobs{% if search_query %}&q={{ search_query|urlencode }}{% endif %}" class="btn btn-sm btn-outline-secondary">Reset</a>
+            {% endif %}
+            <span class="badge bg-dark">Showing: {{ selected_month_label }}</span>
+        </div>
         <div class="card">
             <div class="card-body">
                 <div class="table-responsive">
@@ -80,24 +117,136 @@
                                 <th>Name</th>
                                 <th>Company</th>
                                 <th>Mobile Number</th>
-                                <th>Pending Jobs</th>
+                                <th>New Jobs</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {% for client in clients_with_jobs %}
+                            {% for client in clients_with_new_jobs %}
                             <tr>
                                 <td>{{ client.name }}</td>
                                 <td>{{ client.company|default:"-" }}</td>
                                 <td>{{ client.mobile_number }}</td>
-                                <td><span class="badge bg-primary">{{ client.pending_job_count }}</span></td>
+                                <td><span class="badge bg-primary">{{ client.new_job_count }}</span></td>
                                 <td>
-                                    <a href="{% url 'client_detail' client.pk %}" class="btn btn-sm btn-info">View</a>
+                                    <a href="{% url 'client_detail' client.pk %}?month={{ selected_month }}&subtab=latest" class="btn btn-sm btn-info">View</a>
                                 </td>
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="5" class="text-center">No clients with pending jobs</td>
+                                <td colspan="5" class="text-center">No new jobs in {{ selected_month_label }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="tab-pane fade {% if active_tab == 'ready' %}show active{% endif %}" id="ready-pane" role="tabpanel" aria-labelledby="ready-tab">
+        <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+            <form method="get" class="d-flex flex-wrap align-items-center gap-2" id="month-form-ready">
+                <input type="hidden" name="tab" value="ready">
+                <input type="hidden" name="status" value="{{ status_filter }}">
+                <input type="hidden" name="q" value="{{ search_query }}">
+                <label class="fw-bold text-muted mb-0" for="month-filter-ready">Month:</label>
+                <select name="month" id="month-filter-ready" class="form-select form-select-sm" style="min-width: 190px;" onchange="this.form.submit()">
+                    {% for option in month_options %}
+                    <option value="{{ option.value }}" {% if option.value == selected_month %}selected{% endif %}>{{ option.label }}</option>
+                    {% endfor %}
+                    <option value="all" {% if selected_month == 'all' %}selected{% endif %}>All Months</option>
+                </select>
+                <button type="submit" class="btn btn-sm btn-primary">View</button>
+            </form>
+            {% if selected_month != current_month_value %}
+            <a href="{% url 'client_list' %}?status={{ status_filter }}&tab=ready{% if search_query %}&q={{ search_query|urlencode }}{% endif %}" class="btn btn-sm btn-outline-secondary">Reset</a>
+            {% endif %}
+            <span class="badge bg-dark">Showing: {{ selected_month_label }}</span>
+        </div>
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Company</th>
+                                <th>Mobile Number</th>
+                                <th>Ready Jobs</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for client in clients_ready_for_challan %}
+                            <tr>
+                                <td>{{ client.name }}</td>
+                                <td>{{ client.company|default:"-" }}</td>
+                                <td>{{ client.mobile_number }}</td>
+                                <td><span class="badge bg-warning text-dark">{{ client.ready_job_count }}</span></td>
+                                <td>
+                                    <a href="{% url 'client_detail' client.pk %}?month={{ selected_month }}&subtab=ready" class="btn btn-sm btn-info">View</a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center">No jobs ready for challan in {{ selected_month_label }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="tab-pane fade {% if active_tab == 'challan' %}show active{% endif %}" id="challan-pane" role="tabpanel" aria-labelledby="challan-tab">
+        <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+            <form method="get" class="d-flex flex-wrap align-items-center gap-2" id="month-form-challan">
+                <input type="hidden" name="tab" value="challan">
+                <input type="hidden" name="status" value="{{ status_filter }}">
+                <input type="hidden" name="q" value="{{ search_query }}">
+                <label class="fw-bold text-muted mb-0" for="month-filter-challan">Month:</label>
+                <select name="month" id="month-filter-challan" class="form-select form-select-sm" style="min-width: 190px;" onchange="this.form.submit()">
+                    {% for option in month_options %}
+                    <option value="{{ option.value }}" {% if option.value == selected_month %}selected{% endif %}>{{ option.label }}</option>
+                    {% endfor %}
+                    <option value="all" {% if selected_month == 'all' %}selected{% endif %}>All Months</option>
+                </select>
+                <button type="submit" class="btn btn-sm btn-primary">View</button>
+            </form>
+            {% if selected_month != current_month_value %}
+            <a href="{% url 'client_list' %}?status={{ status_filter }}&tab=challan{% if search_query %}&q={{ search_query|urlencode }}{% endif %}" class="btn btn-sm btn-outline-secondary">Reset</a>
+            {% endif %}
+            <span class="badge bg-dark">Showing: {{ selected_month_label }}</span>
+        </div>
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Company</th>
+                                <th>Mobile Number</th>
+                                <th>Challan Jobs</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for client in clients_on_challan %}
+                            <tr>
+                                <td>{{ client.name }}</td>
+                                <td>{{ client.company|default:"-" }}</td>
+                                <td>{{ client.mobile_number }}</td>
+                                <td><span class="badge bg-success">{{ client.challan_job_count }}</span></td>
+                                <td>
+                                    <a href="{% url 'client_detail' client.pk %}?month={{ selected_month }}&subtab=challans" class="btn btn-sm btn-info">View</a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center">No jobs on challan in {{ selected_month_label }}</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -107,4 +256,18 @@
         </div>
     </div>
 </div>
+
+<script>
+// Keep the active tab open after the page reloads (e.g. after month filtering).
+{% if active_tab != 'clients' %}
+document.addEventListener('DOMContentLoaded', function () {
+    var map = {jobs: 'jobs-tab', ready: 'ready-tab', challan: 'challan-tab'};
+    var tabId = map['{{ active_tab }}'];
+    if (tabId && window.bootstrap) {
+        var el = document.getElementById(tabId);
+        if (el) { new bootstrap.Tab(el).show(); }
+    }
+});
+{% endif %}
+</script>
 {% endblock %}

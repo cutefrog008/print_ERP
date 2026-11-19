@@ -21,6 +21,7 @@ class ClientForm(forms.ModelForm):
             'pincode': forms.TextInput(attrs={'class': 'form-control'}),
             'notes': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
             'status': forms.Select(attrs={'class': 'form-select'}),
+            'category': forms.Select(attrs={'class': 'form-select'}),
             'color_1_rate': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
             'color_2_rate': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
             'color_3_rate': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
@@ -33,6 +34,16 @@ class ClientForm(forms.ModelForm):
             'lamination_charge': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
             'other_charges': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
         }
+
+    def clean_name(self):
+        name = self.cleaned_data.get('name', '').strip()
+        if name:
+            duplicates = Client.objects.filter(name__iexact=name)
+            if self.instance.pk:
+                duplicates = duplicates.exclude(pk=self.instance.pk)
+            if duplicates.exists():
+                raise forms.ValidationError('A client with this name already exists.')
+        return name
 
 
 class ClientPaymentForm(forms.ModelForm):

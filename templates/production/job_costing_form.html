@@ -51,45 +51,105 @@
                     {% if form.non_field_errors %}
                     <div class="alert alert-danger">{{ form.non_field_errors }}</div>
                     {% endif %}
-                    <div class="mb-3">
-                        {{ form.paper_cost.label_tag }}
-                        {{ form.paper_cost }}
-                        {% if form.paper_cost.errors %}<div class="text-danger small">{{ form.paper_cost.errors }}</div>{% endif %}
-                    </div>
-                    <div class="mb-3">
-                        {{ form.printing_cost.label_tag }}
-                        {{ form.printing_cost }}
-                        {% if form.printing_cost.errors %}<div class="text-danger small">{{ form.printing_cost.errors }}</div>{% endif %}
-                    </div>
-                    <div class="mb-3">
-                        {{ form.plate_cost.label_tag }}
-                        {{ form.plate_cost }}
-                        {% if form.plate_cost.errors %}<div class="text-danger small">{{ form.plate_cost.errors }}</div>{% endif %}
-                    </div>
-                    <div class="mb-3">
-                        {{ form.die_charge.label_tag }}
-                        {{ form.die_charge }}
-                        {% if form.die_charge.errors %}<div class="text-danger small">{{ form.die_charge.errors }}</div>{% endif %}
-                    </div>
-                    <div class="mb-3">
-                        {{ form.lamination_charge.label_tag }}
-                        {{ form.lamination_charge }}
-                        {% if form.lamination_charge.errors %}<div class="text-danger small">{{ form.lamination_charge.errors }}</div>{% endif %}
-                    </div>
-                    <div class="mb-3">
-                        {{ form.packing_charge.label_tag }}
-                        {{ form.packing_charge }}
-                        {% if form.packing_charge.errors %}<div class="text-danger small">{{ form.packing_charge.errors }}</div>{% endif %}
-                    </div>
-                    <div class="mb-3">
-                        {{ form.transport_charge.label_tag }}
-                        {{ form.transport_charge }}
-                        {% if form.transport_charge.errors %}<div class="text-danger small">{{ form.transport_charge.errors }}</div>{% endif %}
-                    </div>
-                    <div class="mb-3">
-                        {{ form.remarks.label_tag }}
-                        {{ form.remarks }}
-                        {% if form.remarks.errors %}<div class="text-danger small">{{ form.remarks.errors }}</div>{% endif %}
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.paper_cost.label_tag }}
+                                {{ form.paper_cost }}
+                                {% if form.paper_cost.errors %}<div class="text-danger small">{{ form.paper_cost.errors }}</div>{% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.printing_cost.label_tag }}
+                                {{ form.printing_cost }}
+                                {% if form.printing_cost.errors %}<div class="text-danger small">{{ form.printing_cost.errors }}</div>{% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.plate_cost.label_tag }}
+                                {{ form.plate_cost }}
+                                {% if form.plate_cost.errors %}<div class="text-danger small">{{ form.plate_cost.errors }}</div>{% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.cutting_charge.label_tag }}
+                                {{ form.cutting_charge }}
+                                {% if form.cutting_charge.errors %}<div class="text-danger small">{{ form.cutting_charge.errors }}</div>{% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.lamination_charge.label_tag }}
+                                {{ form.lamination_charge }}
+                                {% if form.lamination_charge.errors %}<div class="text-danger small">{{ form.lamination_charge.errors }}</div>{% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.die_charge.label_tag }}
+                                {{ form.die_charge }}
+                                {% if form.die_charge.errors %}<div class="text-danger small">{{ form.die_charge.errors }}</div>{% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.die_cutting_charge.label_tag }}
+                                {{ form.die_cutting_charge }}
+                                {% if form.die_cutting_charge.errors %}<div class="text-danger small">{{ form.die_cutting_charge.errors }}</div>{% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.binding_charge.label_tag }}
+                                {{ form.binding_charge }}
+                                {% if form.binding_charge.errors %}<div class="text-danger small">{{ form.binding_charge.errors }}</div>{% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.creasing_charge.label_tag }}
+                                {{ form.creasing_charge }}
+                                {% if form.creasing_charge.errors %}<div class="text-danger small">{{ form.creasing_charge.errors }}</div>{% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.pasting_charge.label_tag }}
+                                {{ form.pasting_charge }}
+                                {% if form.pasting_charge.errors %}<div class="text-danger small">{{ form.pasting_charge.errors }}</div>{% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.calender_patti_charge.label_tag }}
+                                {{ form.calender_patti_charge }}
+                                {% if form.calender_patti_charge.errors %}<div class="text-danger small">{{ form.calender_patti_charge.errors }}</div>{% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.packing_charge.label_tag }}
+                                {{ form.packing_charge }}
+                                {% if form.packing_charge.errors %}<div class="text-danger small">{{ form.packing_charge.errors }}</div>{% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.transport_charge.label_tag }}
+                                {{ form.transport_charge }}
+                                {% if form.transport_charge.errors %}<div class="text-danger small">{{ form.transport_charge.errors }}</div>{% endif %}
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="mb-3">
+                                {{ form.remarks.label_tag }}
+                                {{ form.remarks }}
+                                {% if form.remarks.errors %}<div class="text-danger small">{{ form.remarks.errors }}</div>{% endif %}
+                            </div>
+                        </div>
                     </div>
                     
                     <h6 class="mt-4 mb-3">Other Charges</h6>
@@ -137,13 +197,19 @@
             <div class="card-body">
                 <h5 class="card-title">Cost Summary</h5>
                 <table class="table">
-                    <tr><th>Paper Cost:</th><td>₹{{ costing.paper_cost }}</td></tr>
-                    <tr><th>Printing Cost:</th><td>₹{{ costing.printing_cost }}</td></tr>
-                    <tr><th>Plate Cost:</th><td>₹{{ costing.plate_cost }}</td></tr>
-                    <tr><th>Die Charge:</th><td>₹{{ costing.die_charge }}</td></tr>
-                    <tr><th>Lamination:</th><td>₹{{ costing.lamination_charge }}</td></tr>
-                    <tr><th>Packing:</th><td>₹{{ costing.packing_charge }}</td></tr>
-                    <tr><th>Transport:</th><td>₹{{ costing.transport_charge }}</td></tr>
+                    {% if costing.paper_cost %}<tr><th>Paper Cost:</th><td>₹{{ costing.paper_cost }}</td></tr>{% endif %}
+                    {% if costing.printing_cost %}<tr><th>Printing Cost:</th><td>₹{{ costing.printing_cost }}</td></tr>{% endif %}
+                    {% if costing.plate_cost %}<tr><th>Plate Cost:</th><td>₹{{ costing.plate_cost }}</td></tr>{% endif %}
+                    {% if costing.cutting_charge %}<tr><th>Cutting Charge:</th><td>₹{{ costing.cutting_charge }}</td></tr>{% endif %}
+                    {% if costing.lamination_charge %}<tr><th>Lamination:</th><td>₹{{ costing.lamination_charge }}</td></tr>{% endif %}
+                    {% if costing.die_charge %}<tr><th>Die Charge:</th><td>₹{{ costing.die_charge }}</td></tr>{% endif %}
+                    {% if costing.die_cutting_charge %}<tr><th>Die Cutting Charge:</th><td>₹{{ costing.die_cutting_charge }}</td></tr>{% endif %}
+                    {% if costing.binding_charge %}<tr><th>Binding Charge:</th><td>₹{{ costing.binding_charge }}</td></tr>{% endif %}
+                    {% if costing.creasing_charge %}<tr><th>Creasing Charge:</th><td>₹{{ costing.creasing_charge }}</td></tr>{% endif %}
+                    {% if costing.pasting_charge %}<tr><th>Pasting Charge:</th><td>₹{{ costing.pasting_charge }}</td></tr>{% endif %}
+                    {% if costing.calender_patti_charge %}<tr><th>Calender Patti Charge:</th><td>₹{{ costing.calender_patti_charge }}</td></tr>{% endif %}
+                    {% if costing.packing_charge %}<tr><th>Packing:</th><td>₹{{ costing.packing_charge }}</td></tr>{% endif %}
+                    {% if costing.transport_charge %}<tr><th>Transport:</th><td>₹{{ costing.transport_charge }}</td></tr>{% endif %}
                     {% for charge in costing.additional_charges.all %}
                     <tr><th>{{ charge.label }}:</th><td>₹{{ charge.amount }}</td></tr>
                     {% endfor %}

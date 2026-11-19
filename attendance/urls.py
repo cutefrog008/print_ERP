@@ -6,7 +6,11 @@ urlpatterns = [
     path('', views.attendance_list, name='attendance_list'),
     path('create/', views.attendance_create, name='attendance_create'),
     path('my/', views.my_attendance, name='my_attendance'),
+    path('<int:pk>/edit/', views.attendance_edit, name='attendance_edit'),
+    path('<int:pk>/delete/', views.attendance_delete, name='attendance_delete'),
     path('delete-month/', views.attendance_delete_month, name='attendance_delete_month'),
+    path('holidays/', views.holiday_list, name='holiday_list'),
+    path('holidays/<int:pk>/delete/', views.holiday_delete, name='holiday_delete'),
 ]
 
 # Employee Advance URLs — mounted under /attendance/advance/

@@ -12,7 +12,7 @@
         <div class="d-flex flex-wrap justify-content-md-end gap-2">
             <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">← Back</a>
             <form method="get" class="d-flex flex-wrap gap-2">
-                <select name="employee" class="form-select w-auto flex-grow-1">
+                <select name="employee" class="form-select w-auto flex-grow-1" onchange="this.form.submit()">
                     <option value="">All Employees</option>
                     {% for employee in employees %}
                     <option value="{{ employee.id }}" {% if selected_employee and selected_employee.id == employee.id %}selected{% endif %}>
@@ -20,6 +20,7 @@
                     </option>
                     {% endfor %}
                 </select>
+                {% if selected_employee %}
                 <select name="month" class="form-select w-auto flex-grow-1">
                     {% for option in month_options %}
                     <option value="{{ option.month }}" {% if selected_month == option.month and selected_year == option.year %}selected{% endif %}>
@@ -34,33 +35,48 @@
                     </option>
                     {% endfor %}
                 </select>
+                {% else %}
+                <input type="date" name="date" value="{{ filter_date|date:'Y-m-d' }}" class="form-control w-auto">
+                {% endif %}
                 <button type="submit" class="btn btn-outline-primary">View</button>
                 <a href="{% url 'attendance_list' %}" class="btn btn-outline-secondary">Reset</a>
             </form>
             <a href="{% url 'attendance_create' %}" class="btn btn-primary">Mark Attendance</a>
+                {% if user.role == 'admin' %}
+                <a href="{% url 'holiday_list' %}" class="btn btn-outline-primary">Holidays</a>
+                {% endif %}
         </div>
     </div>
 </div>
 
 <div class="alert alert-info" role="alert">
-    <div class="d-flex justify-content-between align-items-center">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
         <div>
-            <strong>Showing attendance for:</strong> 
+            <strong>Showing attendance for:</strong>
             {% if selected_employee %}
-                {{ selected_employee.user.get_full_name }} - 
+                {{ selected_employee.user.get_full_name }} - {{ month_start|date:"F Y" }} ({{ month_start|date:"M. j" }} to {{ month_end|date:"M. j, Y" }})
             {% else %}
-                All Employees - 
+                All Employees - {{ filter_date|date:"F j, Y" }}{% if is_today %} (Today){% endif %}
             {% endif %}
-            {{ start_date|date:"F Y" }} ({{ start_date }} to {{ end_date }})
         </div>
         {% if selected_employee and user.role == 'admin' %}
-        <a href="{% url 'attendance_delete_month' %}?employee={{ selected_employee.id }}&month={{ selected_month }}&year={{ selected_year }}" 
-           class="btn btn-sm btn-danger" 
+        <a href="{% url 'attendance_delete_month' %}?employee={{ selected_employee.id }}&month={{ selected_month }}&year={{ selected_year }}"
+           class="btn btn-sm btn-danger"
            onclick="return confirm('Are you sure you want to delete all attendance records for this month? This action cannot be undone.')">
             Delete Month Attendance
         </a>
         {% endif %}
     </div>
+    {% if selected_employee %}
+    <div class="d-flex flex-wrap gap-3 mt-2">
+        <span class="badge bg-success" style="font-size: 0.9rem; padding: 0.4rem 0.8rem;">
+            Leave/Absent Days: {{ total_leave_days }}
+        </span>
+        <span class="badge bg-warning text-dark" style="font-size: 0.9rem; padding: 0.4rem 0.8rem;">
+            Total Overtime: {{ total_overtime|duration_to_hours_label }}
+        </span>
+    </div>
+    {% endif %}
 </div>
 
 <div class="card">
@@ -78,6 +94,9 @@
                         <th>Status</th>
                         <th>Marked By</th>
                         <th>Remarks</th>
+                        {% if user.role == 'admin' %}
+                        <th>Actions</th>
+                        {% endif %}
                     </tr>
                 </thead>
                 <tbody>
@@ -89,20 +108,34 @@
                         <td>{{ attendance.out_time|default:"-" }}</td>
                         <td>{{ attendance.total_time|duration_to_hours_label }}</td>
                         <td>{{ attendance.overtime|duration_to_hours_label }}</td>
-                        <td><span class="badge bg-{% if attendance.status == 'present' %}success{% elif attendance.status == 'absent' %}danger{% elif attendance.status == 'half_day' %}warning{% elif attendance.status == 'leave' %}info{% else %}secondary{% endif %}">{{ attendance.get_status_display }}</span></td>
+                        <td><span class="badge bg-{% if attendance.status == 'present' %}success{% elif attendance.status == 'leave' %}danger{% else %}secondary{% endif %}">{{ attendance.get_status_display }}</span></td>
                         <td>{{ attendance.marked_by.get_full_name }}</td>
                         <td>{{ attendance.remarks|default:"-" }}</td>
+                        {% if user.role == 'admin' %}
+                        <td>
+                            <div class="d-flex gap-1">
+                                <a href="{% url 'attendance_edit' attendance.pk %}?employee={{ attendance.employee.id }}&month={{ selected_month }}&year={{ selected_year }}"
+                                   class="btn btn-sm btn-outline-warning">Edit</a>
+                                <form method="post"
+                                      action="{% url 'attendance_delete' attendance.pk %}?employee={{ attendance.employee.id }}&month={{ selected_month }}&year={{ selected_year }}"
+                                      onsubmit="return confirm('Delete this attendance record for {{ attendance.employee.user.get_full_name }} on {{ attendance.date }}?');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                </form>
+                            </div>
+                        </td>
+                        {% endif %}
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="9" class="text-center">No attendance records for this date</td>
+                        <td colspan="{% if user.role == 'admin' %}10{% else %}9{% endif %}" class="text-center">No attendance records for this date</td>
                     </tr>
                     {% endfor %}
                     {% if selected_employee %}
                     <tr style="background-color: rgb(247, 244, 243); font-weight: bold;">
                         <td colspan="5" class="text-end">Total for Overtime:</td>
                         <td style="color: green;">{{ total_overtime|duration_to_hours_label }}</td>
-                        <td style="color: red;" colspan="3">Total Leave Days: {{ total_leave_days }}</td>
+                        <td style="color: red;" colspan="{% if user.role == 'admin' %}4{% else %}3{% endif %}">Total Leave Days: {{ total_leave_days }}</td>
                     </tr>
                     {% endif %}
                 </tbody>

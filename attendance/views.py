@@ -2,10 +2,11 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
-from datetime import date, timedelta
-from .models import Attendance
+from django.urls import reverse
+from datetime import date, timedelta, datetime
+from .models import Attendance, Holiday
 from employees.models import Employee
-from .forms import AttendanceForm
+from .forms import AttendanceForm, AttendanceEditForm, HolidayForm
 from django.db import transaction
 
 
@@ -16,73 +17,118 @@ def attendance_list(request):
         return redirect('dashboard')
 
     employee_id = request.GET.get('employee')
-    month = request.GET.get('month')
-    year = request.GET.get('year')
+    date_param = request.GET.get('date')
+    month_param = request.GET.get('month')
+    year_param = request.GET.get('year')
 
     today = date.today()
-    try:
-        month = int(month) if month else today.month
-        if month < 1 or month > 12:
-            month = today.month
-    except (ValueError, TypeError):
-        month = today.month
-    try:
-        year = int(year) if year else today.year
-        if year < 2000 or year > 2100:
-            year = today.year
-    except (ValueError, TypeError):
-        year = today.year
 
-    from calendar import monthrange
-    start_date = date(year, month, 1)
-    end_date = date(year, month, monthrange(year, month)[1])
-
-    attendances = Attendance.objects.filter(date__range=[start_date, end_date]).order_by('-date')
+    # When an employee is selected we show a full month (with leave/overtime totals).
+    # Otherwise we show a single day for all employees.
+    is_employee_view = bool(employee_id)
 
     selected_employee = None
     total_overtime = None
     total_leave_days = None
-    if employee_id:
+    filter_date = today
+    month_start = None
+    month_end = None
+
+    if is_employee_view:
         try:
             employee_id = int(employee_id)
         except (ValueError, TypeError):
             employee_id = None
         if employee_id:
-            attendances = attendances.filter(employee_id=employee_id)
             try:
                 selected_employee = Employee.objects.get(id=employee_id)
             except Employee.DoesNotExist:
                 selected_employee = None
 
-            total_overtime = timedelta(0)
-            for attendance in attendances:
-                if attendance.overtime:
-                    total_overtime += attendance.overtime
+            if selected_employee:
+                try:
+                    sel_month = int(month_param) if month_param else today.month
+                    if sel_month < 1 or sel_month > 12:
+                        sel_month = today.month
+                except (ValueError, TypeError):
+                    sel_month = today.month
+                try:
+                    sel_year = int(year_param) if year_param else today.year
+                    if sel_year < 2000 or sel_year > 2100:
+                        sel_year = today.year
+                except (ValueError, TypeError):
+                    sel_year = today.year
 
-            total_leave_days = attendances.filter(status='leave').count()
+                from calendar import monthrange
+                month_start = date(sel_year, sel_month, 1)
+                month_end = date(sel_year, sel_month, monthrange(sel_year, sel_month)[1])
+
+                attendances = Attendance.objects.filter(
+                    employee_id=employee_id,
+                    date__range=[month_start, month_end],
+                ).order_by('-date')
+
+                total_overtime = timedelta(0)
+                for attendance in attendances:
+                    if attendance.overtime:
+                        total_overtime += attendance.overtime
+                # Leave/Absent days only count on actual working days
+                # (Sundays and public holidays are excluded).
+                holiday_set = set(
+                    Holiday.objects.filter(
+                        date__range=[month_start, month_end]
+                    ).values_list('date', flat=True)
+                )
+                total_leave_days = sum(
+                    1 for a in attendances
+                    if a.status == 'leave'
+                    and a.date.weekday() != 6
+                    and a.date not in holiday_set
+                )
+            else:
+                # employee id was invalid
+                is_employee_view = False
+
+    if not is_employee_view:
+        # All employees, single-day view.
+        try:
+            filter_date = datetime.strptime(date_param, '%Y-%m-%d').date() if date_param else today
+        except (ValueError, TypeError):
+            filter_date = today
+
+        attendances = Attendance.objects.filter(date=filter_date).order_by(
+            '-date', 'employee__user__first_name'
+        )
+
+        from calendar import monthrange
+        month_start = date(filter_date.year, filter_date.month, 1)
+        month_end = date(filter_date.year, filter_date.month, monthrange(filter_date.year, filter_date.month)[1])
 
     employees = Employee.objects.filter(status='active')
 
     month_options = []
     for i in range(12):
-        month_date = today.replace(day=1) - timedelta(days=i*30)
+        month_date = today.replace(day=1) - timedelta(days=i * 30)
         month_options.append({
             'month': month_date.month,
             'year': month_date.year,
-            'label': month_date.strftime('%B %Y')
+            'label': month_date.strftime('%B %Y'),
         })
 
     return render(request, 'attendance/attendance_list.html', {
         'attendances': attendances,
         'employees': employees,
         'selected_employee': selected_employee,
+        'is_employee_view': is_employee_view,
+        'filter_date': filter_date,
+        'is_today': filter_date == today,
+        'month_start': month_start,
+        'month_end': month_end,
+        'selected_month': month_start.month,
+        'selected_year': month_start.year,
         'month_options': month_options,
-        'selected_month': int(month),
-        'selected_year': int(year),
-        'start_date': start_date,
-        'end_date': end_date,
         'total_overtime': total_overtime,
-        'total_leave_days': total_leave_days
+        'total_leave_days': total_leave_days,
     })
 
 
@@ -132,7 +178,9 @@ def attendance_create(request):
             return redirect('attendance_list')
     else:
         form = AttendanceForm()
-    return render(request, 'attendance/attendance_form.html', {'form': form})
+    return render(request, 'attendance/attendance_form.html', {
+        'form': form,
+    })
 
 
 @login_required
@@ -185,6 +233,54 @@ def my_attendance(request):
         'start_date': start_date,
         'end_date': end_date
     })
+
+
+@login_required
+def attendance_edit(request, pk):
+    if request.user.role != 'admin':
+        messages.error(request, 'Only admin can edit attendance records')
+        return redirect('attendance_list')
+
+    attendance = get_object_or_404(Attendance, pk=pk)
+
+    if request.method == 'POST':
+        form = AttendanceEditForm(request.POST, instance=attendance)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Attendance updated successfully')
+            return redirect(_attendance_list_return_url(request))
+    else:
+        form = AttendanceEditForm(instance=attendance)
+
+    return render(request, 'attendance/attendance_edit.html', {
+        'form': form,
+        'attendance': attendance,
+    })
+
+
+@login_required
+def attendance_delete(request, pk):
+    if request.user.role != 'admin':
+        messages.error(request, 'Only admin can delete attendance records')
+        return redirect('attendance_list')
+
+    attendance = get_object_or_404(Attendance, pk=pk)
+
+    if request.method == 'POST':
+        employee_name = attendance.employee.user.get_full_name()
+        attendance_date = attendance.date
+        attendance.delete()
+        messages.success(request, f'Attendance record for {employee_name} on {attendance_date} deleted successfully')
+        return redirect(_attendance_list_return_url(request))
+
+    return redirect('attendance_list')
+
+
+def _attendance_list_return_url(request):
+    """Send the admin back to the same filtered attendance view they came from."""
+    params = request.GET.urlencode()
+    url = reverse('attendance_list')
+    return f'{url}?{params}' if params else url
 
 
 @login_required
@@ -267,3 +363,42 @@ def attendance_delete_month(request):
         'start_date': start_date,
         'end_date': end_date
     })
+
+
+@login_required
+def holiday_list(request):
+    if request.user.role != 'admin':
+        messages.error(request, 'Only admin can manage holidays')
+        return redirect('dashboard')
+
+    holidays = Holiday.objects.all().order_by('-date')
+
+    if request.method == 'POST':
+        form = HolidayForm(request.POST)
+        if form.is_valid():
+            holiday = form.save(commit=False)
+            holiday.created_by = request.user
+            holiday.save()
+            messages.success(request, f'Holiday "{holiday.name}" added for {holiday.date}')
+            return redirect('holiday_list')
+    else:
+        form = HolidayForm()
+
+    return render(request, 'attendance/holiday_list.html', {
+        'holidays': holidays,
+        'form': form,
+    })
+
+
+@login_required
+def holiday_delete(request, pk):
+    if request.user.role != 'admin':
+        messages.error(request, 'Only admin can delete holidays')
+        return redirect('dashboard')
+
+    holiday = get_object_or_404(Holiday, pk=pk)
+    if request.method == 'POST':
+        name = holiday.name
+        holiday.delete()
+        messages.success(request, f'Holiday "{name}" removed')
+    return redirect('holiday_list')

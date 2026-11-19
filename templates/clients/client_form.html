@@ -87,6 +87,12 @@
                         {{ form.pincode }}
                         {% if form.pincode.errors %}<div class="text-danger small">{{ form.pincode.errors }}</div>{% endif %}
                     </div>
+                    <div class="col-md-6 mb-3">
+                        {{ form.category.label_tag }}
+                        {{ form.category }}
+                        <div class="form-text">Category B clients show a detailed cost breakdown on Delivery Challans.</div>
+                        {% if form.category.errors %}<div class="text-danger small">{{ form.category.errors }}</div>{% endif %}
+                    </div>
                 </div>
                 <div class="mb-3">
                     {{ form.address.label_tag }}

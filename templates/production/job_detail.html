@@ -45,6 +45,7 @@
                 <h5 class="card-title">Production Details</h5>
                 <table class="table">
                     <tr><th>Client:</th><td>{{ job.client.name }}</td></tr>
+                    <tr><th>Machine:</th><td>{{ job.machine|default:"-" }}</td></tr>
                     <tr><th>Job Name:</th><td>{{ job.job_name }}</td></tr>
                     <tr><th>Paper Size:</th><td>{{ job.paper_size }}</td></tr>
                     <tr><th>Paper GSM:</th><td>{{ job.paper_gsm }}</td></tr>
@@ -74,18 +75,22 @@
                 <h5 class="card-title">Job Costing</h5>
                 {% if costing %}
                 <table class="table">
-                    <tr><th>Paper Cost:</th><td>₹{{ costing.paper_cost }}</td></tr>
-                    <tr><th>Printing Cost:</th><td>₹{{ costing.printing_cost }}</td></tr>
-                    <tr><th>Plate Cost:</th><td>₹{{ costing.plate_cost }}</td></tr>
-                    <tr><th>Die Charge:</th><td>₹{{ costing.die_charge }}</td></tr>
-                    <tr><th>Lamination:</th><td>₹{{ costing.lamination_charge }}</td></tr>
-                    <tr><th>Packing:</th><td>₹{{ costing.packing_charge }}</td></tr>
-                    <tr><th>Transport:</th><td>₹{{ costing.transport_charge }}</td></tr>
+                    {% if costing.paper_cost %}<tr><th>Paper Cost:</th><td>₹{{ costing.paper_cost }}</td></tr>{% endif %}
+                    {% if costing.printing_cost %}<tr><th>Printing Cost:</th><td>₹{{ costing.printing_cost }}</td></tr>{% endif %}
+                    {% if costing.plate_cost %}<tr><th>Plate Cost:</th><td>₹{{ costing.plate_cost }}</td></tr>{% endif %}
+                    {% if costing.cutting_charge %}<tr><th>Cutting Charge:</th><td>₹{{ costing.cutting_charge }}</td></tr>{% endif %}
+                    {% if costing.lamination_charge %}<tr><th>Lamination:</th><td>₹{{ costing.lamination_charge }}</td></tr>{% endif %}
+                    {% if costing.die_charge %}<tr><th>Die Charge:</th><td>₹{{ costing.die_charge }}</td></tr>{% endif %}
+                    {% if costing.die_cutting_charge %}<tr><th>Die Cutting Charge:</th><td>₹{{ costing.die_cutting_charge }}</td></tr>{% endif %}
+                    {% if costing.creasing_charge %}<tr><th>Creasing Charge:</th><td>₹{{ costing.creasing_charge }}</td></tr>{% endif %}
+                    {% if costing.binding_charge %}<tr><th>Binding Charge:</th><td>₹{{ costing.binding_charge }}</td></tr>{% endif %}
+                    {% if costing.pasting_charge %}<tr><th>Pasting Charge:</th><td>₹{{ costing.pasting_charge }}</td></tr>{% endif %}
+                    {% if costing.calender_patti_charge %}<tr><th>Calender Patti Charge:</th><td>₹{{ costing.calender_patti_charge }}</td></tr>{% endif %}
+                    {% if costing.packing_charge %}<tr><th>Packing:</th><td>₹{{ costing.packing_charge }}</td></tr>{% endif %}
+                    {% if costing.transport_charge %}<tr><th>Transport:</th><td>₹{{ costing.transport_charge }}</td></tr>{% endif %}
                     {% for charge in costing.additional_charges.all %}
                     <tr><th>{{ charge.label }}:</th><td>₹{{ charge.amount }}</td></tr>
                     {% endfor %}
-                    <tr><th>Discount:</th><td>-₹{{ costing.discount }}</td></tr>
-                    <tr><th>GST ({{ costing.gst_rate }}%):</th><td>₹{{ costing.gst_amount }}</td></tr>
                     <tr><th><strong>Grand Total:</strong></th><td><strong>₹{{ costing.grand_total }}</strong></td></tr>
                 </table>
                 <a href="{% url 'job_costing_update' job.pk %}{% if request.GET.client_pk %}?client_pk={{ request.GET.client_pk }}{% endif %}" class="btn btn-primary btn-sm">Edit Costing</a>

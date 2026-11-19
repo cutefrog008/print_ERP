@@ -7,11 +7,7 @@ from datetime import timedelta
 class Attendance(models.Model):
     STATUS_CHOICES = (
         ('present', 'Present'),
-        ('absent', 'Absent'),
-        ('half_day', 'Half Day'),
         ('leave', 'Leave'),
-        ('overtime', 'Overtime'),
-        ('late', 'Late'),
     )
     
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='attendances')
@@ -32,34 +28,65 @@ class Attendance(models.Model):
         ordering = ['-date', '-time']
         unique_together = ('employee', 'date')
     
+    def is_non_working_day(self):
+        """A Sunday or a recorded public holiday."""
+        if self.date.weekday() == 6:  # Sunday
+            return True
+        return Holiday.objects.filter(date=self.date).exists()
+
     def calculate_working_hours(self):
-        """Calculate total working hours and overtime"""
+        """Calculate total working hours and overtime.
+
+        On a non-working day (Sunday or public holiday) every hour worked
+        counts as overtime (no 8h30m standard deduction), so time-and-a-half /
+        full-overtime rules can be applied downstream.
+        """
         if self.in_time and self.out_time:
-            # Convert time to datetime for calculation
             from datetime import datetime
             in_datetime = datetime.combine(self.date, self.in_time)
             out_datetime = datetime.combine(self.date, self.out_time)
-            
+
             # Handle overnight shifts (if out_time is earlier than in_time)
             if out_datetime < in_datetime:
                 out_datetime += timedelta(days=1)
-            
-            # Calculate total time
+
             self.total_time = out_datetime - in_datetime
-            
-            # Calculate overtime (anything beyond 8 hours 30 minutes)
-            standard_hours = timedelta(hours=8, minutes=30)
-            if self.total_time > standard_hours:
-                self.overtime = self.total_time - standard_hours
+
+            if self.is_non_working_day():
+                # Everything worked on a Sunday/holiday is overtime.
+                self.overtime = self.total_time
             else:
-                self.overtime = timedelta(0)
-    
+                standard_hours = timedelta(hours=8, minutes=30)
+                if self.total_time > standard_hours:
+                    self.overtime = self.total_time - standard_hours
+                else:
+                    self.overtime = timedelta(0)
+
     def save(self, *args, **kwargs):
         self.calculate_working_hours()
         super().save(*args, **kwargs)
-    
+
     def __str__(self):
         return f"{self.employee} - {self.date} - {self.status}"
+
+
+class Holiday(models.Model):
+    """Public holiday dates used by attendance logic.
+
+    Adding a date here marks it as a non-working day for attendance: working
+    hours count as full overtime and the date is excluded from leave totals.
+    """
+    date = models.DateField(unique=True)
+    name = models.CharField(max_length=100)
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_holidays')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'holidays'
+        ordering = ['date']
+
+    def __str__(self):
+        return f"{self.name} ({self.date})"
 
 
 class EmployeeAdvanceTransaction(models.Model):

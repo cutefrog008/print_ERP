@@ -2,7 +2,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db import transaction
-from datetime import date
+from django.urls import reverse
+from datetime import date, datetime
 from .models import Job, JobCosting, JobAdditionalCharge, CostingAuditLog
 from .forms import JobForm, JobCostingForm, JobAdditionalChargeForm, JobAdditionalChargeFormSet
 
@@ -10,22 +11,40 @@ from .forms import JobForm, JobCostingForm, JobAdditionalChargeForm, JobAddition
 @login_required
 def job_list(request):
     today = date.today()
-    if request.user.role == 'employee':
+
+    # Only admins see every job; all other staff (including managers) see only their own
+    if request.user.role == 'admin':
+        own_jobs = Job.objects.all()
+    else:
         if not hasattr(request.user, 'employee_profile'):
             messages.error(request, 'Permission denied')
             return redirect('dashboard')
-        jobs = Job.objects.filter(date=today, operator=request.user.employee_profile)
-    else:
-        selected_date = today
-        raw_date = request.GET.get('date')
-        if raw_date:
-            try:
-                from datetime import datetime
-                selected_date = datetime.strptime(raw_date, '%Y-%m-%d').date()
-            except (ValueError, TypeError):
-                selected_date = today
-        jobs = Job.objects.filter(date=selected_date)
-    return render(request, 'production/job_list.html', {'jobs': jobs, 'today': today})
+        own_jobs = Job.objects.filter(operator=request.user.employee_profile)
+
+    # Date filter (defaults to today) so old jobs can be reviewed
+    selected_date = today
+    raw_date = request.GET.get('date')
+    if raw_date:
+        try:
+            selected_date = datetime.strptime(raw_date, '%Y-%m-%d').date()
+        except (ValueError, TypeError):
+            selected_date = today
+
+    jobs = own_jobs.filter(date=selected_date)
+
+    # Machine filter (always show every machine, whether or not it has jobs)
+    selected_machine = request.GET.get('machine') or ''
+    machines = [choice[0] for choice in Job.MACHINE_CHOICES]
+    if selected_machine:
+        jobs = jobs.filter(machine=selected_machine)
+
+    return render(request, 'production/job_list.html', {
+        'jobs': jobs,
+        'today': today,
+        'selected_date': selected_date,
+        'machines': machines,
+        'selected_machine': selected_machine,
+    })
 
 
 @login_required
@@ -54,6 +73,7 @@ def job_update(request, pk):
     
     # Get client_pk from query params to redirect back to client detail
     client_pk = request.GET.get('client_pk')
+    month = request.GET.get('month') or request.POST.get('month')
     
     if request.method == 'POST':
         form = JobForm(request.POST, instance=job, user=request.user)
@@ -61,11 +81,14 @@ def job_update(request, pk):
             form.save()
             messages.success(request, 'Job updated successfully')
             if client_pk:
-                return redirect('client_detail', pk=client_pk)
+                url = reverse('client_detail', kwargs={'pk': client_pk})
+                if month:
+                    url = f'{url}?month={month}'
+                return redirect(url)
             return redirect('job_list')
     else:
         form = JobForm(instance=job, user=request.user)
-    return render(request, 'production/job_form.html', {'form': form, 'job': job, 'client_pk': client_pk})
+    return render(request, 'production/job_form.html', {'form': form, 'job': job, 'client_pk': client_pk, 'month': month})
 
 
 @login_required
@@ -86,11 +109,21 @@ def job_delete(request, pk):
         messages.error(request, 'Only admin can delete jobs')
         return redirect('job_list')
     job = get_object_or_404(Job, pk=pk)
+
+    # Get client_pk so we can return to the client detail page after deleting
+    client_pk = request.GET.get('client_pk') or request.POST.get('client_pk')
+    month = request.GET.get('month') or request.POST.get('month')
+
     if request.method == 'POST':
         job.delete()
         messages.success(request, 'Job deleted successfully')
+        if client_pk:
+            url = reverse('client_detail', kwargs={'pk': client_pk})
+            if month:
+                url = f'{url}?month={month}'
+            return redirect(url)
         return redirect('job_list')
-    return render(request, 'production/job_delete.html', {'job': job})
+    return render(request, 'production/job_delete.html', {'job': job, 'client_pk': client_pk, 'month': month})
 
 
 @login_required
@@ -128,6 +161,10 @@ def job_costing_create(request, pk):
                     charge = charge_form.save(commit=False)
                     charge.job_costing = costing
                     charge.save()
+
+            # Recalculate grand total now that all additional charges are saved
+            costing.calculate_total()
+            costing.save(update_fields=['grand_total'])
 
             job.status = 'ready_for_challan'
             job.save()
@@ -182,6 +219,10 @@ def job_costing_update(request, pk):
                     charge = charge_form.save(commit=False)
                     charge.job_costing = costing
                     charge.save()
+
+            # Recalculate grand total now that additional charges have been replaced
+            costing.calculate_total()
+            costing.save(update_fields=['grand_total'])
 
             if job.status == 'pending_costing':
                 job.status = 'ready_for_challan'

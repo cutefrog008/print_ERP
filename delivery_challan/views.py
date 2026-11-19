@@ -28,6 +28,58 @@ def _view_allowed(request):
     return request.user.role in ('admin', 'manager')
 
 
+COST_HEAD_FIELDS = (
+    ('paper_cost', 'Paper'),
+    ('printing_cost', 'Printing'),
+    ('plate_cost', 'Plate'),
+    ('die_charge', 'Die'),
+    ('cutting_charge', 'Cutting'),
+    ('creasing_charge', 'Creasing'),
+    ('die_cutting_charge', 'Die Cutting'),
+    ('binding_charge', 'Binding'),
+    ('pasting_charge', 'Pasting'),
+    ('calender_patti_charge', 'Calender Patti'),
+    ('lamination_charge', 'Lamination'),
+    ('packing_charge', 'Packing'),
+    ('transport_charge', 'Transport'),
+)
+
+
+def _cost_breakdown(item, heads=None):
+    """Ordered list of (label, amount) cost heads for a challan item's job.
+
+    Returns every non-zero main cost head plus each custom additional charge by
+    its own label. Returns None when the item has no linked costing.
+
+    If `heads` is given (a list of field names), only those main cost heads are
+    included (used for Category A clients: only Packing & Transport). Additional
+    charges are always excluded when `heads` is set.
+    """
+    costing = None
+    if item.job_id:
+        costing = getattr(item.job, 'costing', None)
+    if not costing:
+        return None
+    rows = []
+    for field, label in COST_HEAD_FIELDS:
+        if heads is not None and field not in heads:
+            continue
+        amount = getattr(costing, field, None) or Decimal('0.00')
+        if amount:
+            rows.append((label, amount))
+    if heads is None:
+        for extra in costing.additional_charges.all():
+            amount = extra.amount or Decimal('0.00')
+            if amount:
+                rows.append((extra.label, amount))
+    return rows
+
+
+def _attach_cost_breakdowns(items, heads=None):
+    for item in items:
+        item.cost_breakdown = _cost_breakdown(item, heads=heads)
+
+
 def _snapshot_job(job):
     cost = Decimal('0.00')
     try:
@@ -226,16 +278,26 @@ def challan_detail(request, pk):
         return redirect('dashboard')
 
     challan = get_object_or_404(
-        DeliveryChallan.objects.select_related('client', 'created_by').prefetch_related('items', 'items__job__costing', 'audit_logs', 'audit_logs__performed_by'),
+        DeliveryChallan.objects.select_related('client', 'created_by').prefetch_related('items', 'items__job__costing__additional_charges', 'audit_logs', 'audit_logs__performed_by'),
         pk=pk
     )
     items = challan.items.all()
     audit_logs = challan.audit_logs.all()[:50]
 
+    # Always attach a cost breakdown:
+    # - Category B: full breakdown (all heads + custom charges)
+    # - Category A: only Packing & Transport (if non-zero)
+    if challan.client.is_category_b:
+        _attach_cost_breakdowns(items)
+    else:
+        _attach_cost_breakdowns(items, heads=['packing_charge', 'transport_charge'])
+    show_breakdown = True
+
     return render(request, 'delivery_challan/challan_detail.html', {
         'challan': challan,
         'items': items,
         'audit_logs': audit_logs,
+        'show_breakdown': show_breakdown,
         'is_admin': _admin_only(request),
         'can_edit': challan.status not in ('completed', 'cancelled'),
     })
@@ -456,10 +518,19 @@ def challan_print(request, pk):
         return redirect('dashboard')
 
     challan = get_object_or_404(
-        DeliveryChallan.objects.select_related('client', 'created_by').prefetch_related('items', 'items__job__costing'),
+        DeliveryChallan.objects.select_related('client', 'created_by').prefetch_related('items', 'items__job__costing__additional_charges'),
         pk=pk
     )
     items = challan.items.all()
+
+    # Always attach a cost breakdown:
+    # - Category B: full breakdown (all heads + custom charges)
+    # - Category A: only Packing & Transport (if non-zero)
+    if challan.client.is_category_b:
+        _attach_cost_breakdowns(items)
+    else:
+        _attach_cost_breakdowns(items, heads=['packing_charge', 'transport_charge'])
+    show_breakdown = True
 
     if _admin_only(request):
         DeliveryChallanAuditLog.objects.create(
@@ -471,6 +542,7 @@ def challan_print(request, pk):
     return render(request, 'delivery_challan/challan_print.html', {
         'challan': challan,
         'items': items,
+        'show_breakdown': show_breakdown,
     })
 
 

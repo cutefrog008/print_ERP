@@ -94,7 +94,7 @@
                         <td>{{ attendance.out_time|default:"-" }}</td>
                         <td>{{ attendance.total_time|duration_to_hours_label }}</td>
                         <td>{{ attendance.overtime|duration_to_hours_label }}</td>
-                        <td><span class="badge bg-{% if attendance.status == 'present' %}success{% elif attendance.status == 'absent' %}danger{% elif attendance.status == 'half_day' %}warning{% elif attendance.status == 'leave' %}info{% else %}secondary{% endif %}">{{ attendance.get_status_display }}</span></td>
+                        <td><span class="badge bg-{% if attendance.status == 'present' %}success{% elif attendance.status == 'leave' %}info{% else %}secondary{% endif %}">{{ attendance.get_status_display }}</span></td>
                         <td>{{ attendance.marked_by.get_full_name }}</td>
                         <td>{{ attendance.remarks|default:"-" }}</td>
                     </tr>

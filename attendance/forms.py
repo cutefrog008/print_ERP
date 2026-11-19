@@ -1,7 +1,7 @@
 from django import forms
 from django.utils import timezone
 from django.db.models import Sum
-from .models import Attendance, EmployeeAdvanceTransaction
+from .models import Attendance, EmployeeAdvanceTransaction, Holiday
 from employees.models import Employee
 
 
@@ -31,6 +31,20 @@ class AttendanceForm(forms.ModelForm):
         self.fields['time'].initial = timezone.localtime().time()
         self.fields['in_time'].initial = '09:00'
         self.fields['out_time'].initial = '17:30'
+
+
+class AttendanceEditForm(forms.ModelForm):
+    class Meta:
+        model = Attendance
+        fields = ['date', 'time', 'in_time', 'out_time', 'status', 'remarks']
+        widgets = {
+            'date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'time': forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
+            'in_time': forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
+            'out_time': forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
+            'status': forms.Select(attrs={'class': 'form-select'}),
+            'remarks': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
+        }
 
 
 class AddAdvanceForm(forms.ModelForm):
@@ -158,3 +172,17 @@ class EditTransactionForm(forms.ModelForm):
                 )
         
         return cleaned_data
+
+
+class HolidayForm(forms.ModelForm):
+    class Meta:
+        model = Holiday
+        fields = ['date', 'name']
+        widgets = {
+            'date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. Diwali'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['date'].initial = timezone.localdate()

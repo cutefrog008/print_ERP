@@ -8,6 +8,10 @@ class Client(models.Model):
         ('active', 'Active'),
         ('archived', 'Archived'),
     )
+    CATEGORY_CHOICES = (
+        ('a', 'Category A'),
+        ('b', 'Category B'),
+    )
     
     # Basic Information
     name = models.CharField(max_length=255, verbose_name="Client Name")
@@ -24,6 +28,8 @@ class Client(models.Model):
     pincode = models.CharField(max_length=20, blank=True, null=True, verbose_name="Pincode")
     notes = models.TextField(blank=True, null=True, verbose_name="Notes")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active', verbose_name="Status")
+    category = models.CharField(max_length=1, choices=CATEGORY_CHOICES, default='a', verbose_name="Category",
+                                help_text="Category B clients get a detailed cost breakdown on their Delivery Challans.")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Created At")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Updated At")
     
@@ -46,6 +52,10 @@ class Client(models.Model):
     
     def __str__(self):
         return f"{self.name} - {self.company if self.company else ''}"
+
+    @property
+    def is_category_b(self):
+        return self.category == 'b'
     
     def has_related_records(self):
         """Check if client has any related records that would prevent permanent deletion"""

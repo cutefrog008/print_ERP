@@ -73,14 +73,32 @@ class PricingService:
             costing_instance.printing_cost = breakdown['printing_cost']
             costing_instance.plate_cost = breakdown['plate_cost']
             costing_instance.die_charge = Decimal('0.00')
+            costing_instance.cutting_charge = Decimal('0.00')
+            costing_instance.creasing_charge = Decimal('0.00')
+            costing_instance.die_cutting_charge = Decimal('0.00')
+            costing_instance.binding_charge = Decimal('0.00')
+            costing_instance.pasting_charge = Decimal('0.00')
+            costing_instance.calender_patti_charge = Decimal('0.00')
             costing_instance.lamination_charge = Decimal('0.00')
             costing_instance.packing_charge = Decimal('0.00')
             costing_instance.transport_charge = Decimal('0.00')
             for entry in additional_charges['breakdown']:
                 name_lower = entry['name'].lower() if entry['name'] else ''
                 amt = Decimal(str(entry['amount']))
-                if 'die' in name_lower:
+                if 'die cut' in name_lower:
+                    costing_instance.die_cutting_charge += amt
+                elif 'die' in name_lower:
                     costing_instance.die_charge += amt
+                elif 'cut' in name_lower:
+                    costing_instance.cutting_charge += amt
+                elif 'creas' in name_lower:
+                    costing_instance.creasing_charge += amt
+                elif 'bind' in name_lower:
+                    costing_instance.binding_charge += amt
+                elif 'past' in name_lower:
+                    costing_instance.pasting_charge += amt
+                elif 'calender' in name_lower or 'patti' in name_lower:
+                    costing_instance.calender_patti_charge += amt
                 elif 'laminat' in name_lower:
                     costing_instance.lamination_charge += amt
                 elif 'pack' in name_lower:

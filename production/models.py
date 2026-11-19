@@ -1,4 +1,6 @@
 from django.db import models
+from django.db.models.signals import post_delete
+from django.dispatch import receiver
 from django.utils import timezone
 from accounts.models import User
 from clients.models import Client
@@ -36,10 +38,13 @@ class Job(models.Model):
         ('12.5x18', '12.5x18'),
         ('12x23', '12x23'),
         ('12x25', '12x25'),
+        ('13.5x17', '13.5x17'),
         ('13x19', '13x19'),
         ('14x22', '14x22'),
         ('15x20', '15x20'),
+        ('16x26', '16x26'),
         ('17x24', '17x24'),
+        ('17x26', '17x26'),
         ('18x22', '18x22'),
         ('18x23', '18x23'),
         ('18x25', '18x25'),
@@ -73,6 +78,15 @@ class Job(models.Model):
         ('Art Card', 'Art Card'),
         ('Duplex', 'Duplex'),
         ('SBS', 'SBS'),
+        ('Ledger', 'Ledger'),
+        ('Yellow & Pink', 'Yellow & Pink'),
+    )
+
+    MACHINE_CHOICES = (
+        ('Shinohara 19x26 old', 'Shinohara 19x26 old'),
+        ('Shinohara 19x26 new', 'Shinohara 19x26 new'),
+        ('Shinohara 2 colour', 'Shinohara 2 colour'),
+        ('Shinohara 20x30 new', 'Shinohara 20x30 new'),
     )
 
     client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name='jobs')
@@ -145,6 +159,12 @@ class JobCosting(models.Model):
     printing_cost = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     plate_cost = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     die_charge = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    cutting_charge = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    creasing_charge = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    die_cutting_charge = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    binding_charge = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    pasting_charge = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    calender_patti_charge = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     lamination_charge = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     packing_charge = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     transport_charge = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
@@ -165,6 +185,12 @@ class JobCosting(models.Model):
             self.printing_cost +
             self.plate_cost +
             self.die_charge +
+            self.cutting_charge +
+            self.creasing_charge +
+            self.die_cutting_charge +
+            self.binding_charge +
+            self.pasting_charge +
+            self.calender_patti_charge +
             self.lamination_charge +
             self.packing_charge +
             self.transport_charge
@@ -207,3 +233,15 @@ class CostingAuditLog(models.Model):
 
     def __str__(self):
         return f"{self.job.job_name} - {self.field_name} - {self.changed_at}"
+
+
+@receiver(post_delete, sender=Job)
+def delete_job_image_file(sender, instance, **kwargs):
+    """Delete the job photo from disk when the job is deleted.
+
+    Django removes the database row but leaves the uploaded file behind, which
+    would leave an orphan in media/job_images/. This also covers jobs removed
+    through a cascade, such as deleting a client.
+    """
+    if instance.job_image:
+        instance.job_image.delete(save=False)

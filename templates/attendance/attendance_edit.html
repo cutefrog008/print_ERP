@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Attendance - Printing ERP{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2>Edit Attendance</h2>
+        <p class="text-muted mb-0">{{ attendance.employee.user.get_full_name }} - {{ attendance.date }}</p>
+    </div>
+    <div class="col text-end">
+        <a href="{% url 'attendance_list' %}{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}" class="btn btn-secondary">← Back</a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    {{ form.date.label_tag }}
+                    {{ form.date }}
+                    {% if form.date.errors %}<div class="text-danger small">{{ form.date.errors }}</div>{% endif %}
+                </div>
+                <div class="col-md-6 mb-3">
+                    {{ form.time.label_tag }}
+                    {{ form.time }}
+                    {% if form.time.errors %}<div class="text-danger small">{{ form.time.errors }}</div>{% endif %}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    {{ form.in_time.label_tag }}
+                    {{ form.in_time }}
+                    {% if form.in_time.errors %}<div class="text-danger small">{{ form.in_time.errors }}</div>{% endif %}
+                </div>
+                <div class="col-md-4 mb-3">
+                    {{ form.out_time.label_tag }}
+                    {{ form.out_time }}
+                    {% if form.out_time.errors %}<div class="text-danger small">{{ form.out_time.errors }}</div>{% endif %}
+                </div>
+                <div class="col-md-4 mb-3">
+                    {{ form.status.label_tag }}
+                    {{ form.status }}
+                    {% if form.status.errors %}<div class="text-danger small">{{ form.status.errors }}</div>{% endif %}
+                </div>
+            </div>
+            <div class="mb-3">
+                {{ form.remarks.label_tag }}
+                {{ form.remarks }}
+                {% if form.remarks.errors %}<div class="text-danger small">{{ form.remarks.errors }}</div>{% endif %}
+            </div>
+
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+            {% endif %}
+
+            <button type="submit" class="btn btn-primary px-4">Save Changes</button>
+            <a href="{% url 'attendance_list' %}{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

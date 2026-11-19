@@ -12,6 +12,38 @@
     </div>
 </div>
 
+<div class="card mb-3">
+    <div class="card-body">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-12 col-md-auto">
+                <label class="form-label mb-1">Date</label>
+                <input type="date" name="date" value="{{ selected_date|date:'Y-m-d' }}" class="form-control">
+            </div>
+            {% if selected_machine %}
+            <input type="hidden" name="machine" value="{{ selected_machine }}">
+            {% endif %}
+            <div class="col-12 col-md-auto">
+                <button type="submit" class="btn btn-outline-primary">View</button>
+                <a href="{% url 'job_list' %}" class="btn btn-outline-secondary">Reset</a>
+            </div>
+        </form>
+
+        <div class="d-flex flex-wrap gap-2 mt-3">
+            <span class="text-muted small align-self-center me-1">Machine:</span>
+            <a href="{% url 'job_list' %}?date={{ selected_date|date:'Y-m-d' }}"
+               class="btn btn-sm {% if not selected_machine %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                All
+            </a>
+            {% for m in machines %}
+            <a href="{% url 'job_list' %}?date={{ selected_date|date:'Y-m-d' }}&machine={{ m|urlencode }}"
+               class="btn btn-sm {% if selected_machine == m %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                {{ m }}
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
 <div class="card">
     <div class="card-body">
         <div class="table-responsive">
@@ -59,6 +91,9 @@
                 </tbody>
             </table>
         </div>
+    </div>
+    <div class="card-footer d-flex justify-content-end">
+        <strong>Total Jobs: {{ jobs|length }}</strong>
     </div>
 </div>
 {% endblock %}

@@ -178,6 +178,35 @@
         padding-bottom: 9px;
     }
 
+    /* Category B cost breakdown sub-row */
+    .challan-page table.items tr.cost-breakdown-row td {
+        background: #fbfcfe;
+        border-bottom: 1px solid #e5e7eb;
+        padding: 4px 6px 6px;
+    }
+
+    .cost-breakdown {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2px 12px;
+        font-size: 8px;
+        color: #444;
+        line-height: 1.5;
+    }
+
+    .cost-breakdown .cb-title {
+        font-weight: 700;
+        color: #111;
+    }
+
+    .cost-breakdown .cb-item {
+        white-space: nowrap;
+    }
+
+    .cost-breakdown .cb-label {
+        color: #666;
+    }
+
     .challan-page table.items tfoot td:last-child {
         white-space: nowrap !important;
         font-size: 10px;
@@ -429,6 +458,18 @@
         background: #f0f9ff !important;
     }
 
+    /* Category B cost breakdown sub-row */
+    .challan-page table.items tr.cost-breakdown-row td {
+        background: #fbfcfe !important;
+        padding: 3px 4px !important;
+    }
+
+    .challan-page .cost-breakdown {
+        font-size: 6.5px !important;
+        gap: 1px 8px !important;
+        line-height: 1.4 !important;
+    }
+
     .challan-page table.items thead {
         display: table-header-group !important;
     }
@@ -607,6 +648,18 @@
                 <td class="text-end fw-semibold">{{ item.total_sheets }}</td>
                 <td class="text-end fw-bold">₹{{ item.manual_cost|floatformat:2 }}</td>
             </tr>
+            {% if show_breakdown and item.cost_breakdown %}
+            <tr class="cost-breakdown-row">
+                <td colspan="11">
+                    <div class="cost-breakdown">
+                        <span class="cb-title">Cost Details:</span>
+                        {% for label, amount in item.cost_breakdown %}
+                        <span class="cb-item"><span class="cb-label">{{ label }}:</span> ₹{{ amount|floatformat:2 }}</span>
+                        {% endfor %}
+                    </div>
+                </td>
+            </tr>
+            {% endif %}
             {% endfor %}
         </tbody>
         <tfoot>
