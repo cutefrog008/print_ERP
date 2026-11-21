@@ -102,7 +102,7 @@ class Job(models.Model):
     machine = models.CharField(max_length=100, blank=True, null=True, verbose_name='Machine')
     operator = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='jobs')
     remarks = models.TextField(blank=True, null=True)
-    date = models.DateField(auto_now_add=True)
+    date = models.DateField(default=timezone.localdate)
     time = models.TimeField(auto_now_add=True)
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_jobs')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending_costing')

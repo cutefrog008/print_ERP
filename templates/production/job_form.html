@@ -114,6 +114,16 @@
                     {% if form.total_sheets.errors %}<div class="text-danger small">{{ form.total_sheets.errors }}</div>{% endif %}
                 </div>
             </div>
+            {% if form.date %}
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    {{ form.date.label_tag }}
+                    {{ form.date }}
+                    {% if form.date.errors %}<div class="text-danger small">{{ form.date.errors }}</div>{% endif %}
+                    <div class="form-text">Admin only: pick a past date to back-fill a job that was missed.</div>
+                </div>
+            </div>
+            {% endif %}
             <div class="row">
                 <div class="{% if job %}col-md-6{% else %}col-md-12{% endif %} mb-3">
                     {{ form.operator.label_tag }}

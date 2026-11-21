@@ -2,7 +2,9 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db import transaction
-from django.db.models import Count, Q, Sum, Case, When, F, Value, OuterRef, Subquery, DecimalField
+from django.db.models import Count, Q
+from django.db.models import Sum, Case, When, F, Value, OuterRef, Subquery, DecimalField
+from django.views.decorators.cache import never_cache
 from django.db.models.functions import Coalesce
 from decimal import Decimal
 from datetime import date, datetime
@@ -408,3 +410,31 @@ def client_payment_delete(request, pk):
         messages.success(request, 'Payment deleted successfully')
         return redirect('client_detail', pk=client_pk)
     return render(request, 'clients/client_payment_delete.html', {'payment': payment, 'client': payment.client})
+
+
+@never_cache
+@login_required
+def client_payment_statement(request, pk):
+    """Printable statement of all payments received from a client.
+
+    The admin can open this page and use the browser's "Print / Save as PDF"
+    to send the client a copy of their payment history.
+    """
+    if request.user.role != 'admin':
+        messages.error(request, 'You do not have permission to view this page')
+        return redirect('dashboard')
+    client = get_object_or_404(Client, pk=pk)
+
+    payments = client.payments.all().select_related('received_by')
+    total_received = sum(payment.amount for payment in payments)
+    total_billable = sum(challan.total_cost for challan in client.delivery_challans.all())
+    pending_amount = total_billable - total_received
+
+    return render(request, 'clients/client_payment_statement.html', {
+        'client': client,
+        'payments': payments,
+        'total_received': total_received,
+        'total_billable': total_billable,
+        'pending_amount': pending_amount,
+        'today': date.today(),
+    })

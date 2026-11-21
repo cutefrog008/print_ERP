@@ -1,5 +1,6 @@
 from django import forms
 from django.forms import formset_factory
+from django.utils import timezone
 from .models import Job, JobCosting, JobAdditionalCharge
 
 
@@ -67,7 +68,7 @@ class JobForm(forms.ModelForm):
 
     class Meta:
         model = Job
-        fields = ['client', 'job_name', 'number_of_sheets', 'printing_colors', 'total_sheets', 'machine', 'operator', 'remarks']
+        fields = ['client', 'job_name', 'number_of_sheets', 'printing_colors', 'total_sheets', 'machine', 'operator', 'remarks', 'date']
         widgets = {
             'client': forms.Select(attrs={'class': 'form-select'}),
             'job_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter job name'}),
@@ -94,6 +95,18 @@ class JobForm(forms.ModelForm):
             # If editing, and it's an employee, they shouldn't change the operator either
             if self.user and self.user.role == 'employee':
                 self.fields['operator'].disabled = True
+
+        # Only admin may choose the job date, so a job an employee forgot can be
+        # back-dated. Everyone else always gets today's date automatically.
+        if self.user and self.user.role == 'admin':
+            self.fields['date'].widget = forms.DateInput(
+                attrs={'class': 'form-control', 'type': 'date'},
+                format='%Y-%m-%d',
+            )
+            self.fields['date'].input_formats = ['%Y-%m-%d']
+            self.fields['date'].initial = instance.date if (instance and instance.pk) else timezone.localdate()
+        else:
+            self.fields.pop('date', None)
 
         preset_sizes = [c[0] for c in Job.PAPER_SIZE_CHOICES]
         preset_gsms = [str(c[0]) for c in Job.PAPER_GSM_CHOICES]
@@ -134,6 +147,13 @@ class JobForm(forms.ModelForm):
             self.fields['paper_gsm_select'].initial = preset_gsms[0] if preset_gsms else ''
             self.fields['paper_type_select'].initial = preset_types[0] if preset_types else ''
             self.fields['printing_type_select'].initial = preset_printing_types[0] if preset_printing_types else ''
+
+    def clean_date(self):
+        # Jobs may only be back-dated (or dated today) for a missed entry.
+        chosen_date = self.cleaned_data.get('date')
+        if chosen_date and chosen_date > timezone.localdate():
+            raise forms.ValidationError('Job date cannot be in the future.')
+        return chosen_date
 
     def clean(self):
         cleaned_data = super().clean()

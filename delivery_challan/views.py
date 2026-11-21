@@ -3,7 +3,8 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
 from django.db import transaction
-from django.db.models import Sum, Q, Count
+from django.db.models import Sum, Q, Count, F
+from django.views.decorators.cache import never_cache
 from datetime import date
 from decimal import Decimal
 import calendar
@@ -510,6 +511,7 @@ def challan_status_update(request, pk):
     })
 
 
+@never_cache
 @login_required
 @transaction.atomic
 def challan_print(request, pk):
@@ -521,7 +523,7 @@ def challan_print(request, pk):
         DeliveryChallan.objects.select_related('client', 'created_by').prefetch_related('items', 'items__job__costing__additional_charges'),
         pk=pk
     )
-    items = challan.items.all()
+    items = challan.items.all().order_by(F('job_date').asc(nulls_last=True), 'job_number')
 
     # Always attach a cost breakdown:
     # - Category B: full breakdown (all heads + custom charges)
@@ -531,6 +533,15 @@ def challan_print(request, pk):
     else:
         _attach_cost_breakdowns(items, heads=['packing_charge', 'transport_charge'])
     show_breakdown = True
+
+    # Client's running-account balance, matching the client profile:
+    #   outstanding = (sum of all the client's challans) - (payments received)
+    # "Previous Balance" removes this challan's own amount, so adding it back
+    # gives the true Grand Total the client owes without counting this challan twice.
+    total_billable = sum(c.total_cost for c in challan.client.delivery_challans.all())
+    total_received = sum(p.amount for p in challan.client.payments.all())
+    grand_total = total_billable - total_received
+    previous_balance = grand_total - challan.total_cost
 
     if _admin_only(request):
         DeliveryChallanAuditLog.objects.create(
@@ -543,6 +554,8 @@ def challan_print(request, pk):
         'challan': challan,
         'items': items,
         'show_breakdown': show_breakdown,
+        'previous_balance': previous_balance,
+        'grand_total': grand_total,
     })
 
 

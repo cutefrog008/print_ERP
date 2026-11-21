@@ -1,0 +1,261 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Payment Statement - {{ client.name }}{% endblock %}
+
+{% block content %}
+
+<style>
+    @page { size: A4 portrait; margin: 7mm; }
+
+    * { box-sizing: border-box; }
+
+    body { background: #f3f4f6; color: #111; font-family: "Segoe UI", Helvetica, Arial, sans-serif; }
+
+    .statement-page {
+        background: #fff;
+        width: 210mm;
+        min-height: 297mm;
+        padding: 10mm;
+        margin: 20px auto;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
+        color: #111;
+        box-sizing: border-box;
+    }
+
+    .company-logo {
+        width: 60px;
+        height: 60px;
+        flex: 0 0 60px;
+        border-radius: 50%;
+        overflow: hidden;
+        border: 1px solid #eee;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    }
+
+    .company-logo img { display: block; width: 100%; height: 100%; object-fit: contain; }
+
+    .doc-title { font-weight: 800; font-size: 18px; line-height: 1.3; letter-spacing: 0.3px; }
+    .doc-sub { color: #555; font-size: 11px; line-height: 1.7; }
+
+    .kv-label { font-size: 9px; color: #666; text-transform: uppercase; letter-spacing: 0.5px; }
+    .kv-value { font-size: 12px; font-weight: 600; color: #111; overflow-wrap: anywhere; }
+
+    table.table.items {
+        width: 100%;
+        table-layout: fixed;
+        border-collapse: collapse;
+        margin: 0 0 18px;
+        font-size: 11px;
+    }
+
+    table.items th,
+    table.items td {
+        padding: 7px 5px;
+        vertical-align: middle;
+        overflow-wrap: anywhere;
+        line-height: 1.35;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    table.items th {
+        background: #f1f3f5;
+        color: #333;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        text-align: left;
+        border-bottom: 1.5px solid #adb5bd;
+    }
+
+    table.items td.amount,
+    table.items th.amount { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+    table.items tfoot td {
+        background: #f0f9ff;
+        font-weight: 700;
+        border-top: 1px solid #adb5bd;
+        padding-top: 9px;
+        padding-bottom: 9px;
+    }
+
+    .summary-box {
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 12px 16px;
+        background: #fafafa;
+    }
+
+    .summary-box .sum-row { display: flex; justify-content: space-between; padding: 3px 0; font-size: 12px; }
+    .summary-box .sum-row .label { color: #555; }
+    .summary-box .sum-row .value { font-weight: 700; }
+    .summary-box .sum-row.grand { border-top: 1px solid #ddd; margin-top: 4px; padding-top: 7px; font-size: 14px; }
+
+    .sign-box { border-top: 1px dashed #999; padding-top: 8px; margin-top: 20px; text-align: center; font-size: 9px; color: #555; }
+
+    .print-toolbar {
+        position: sticky;
+        top: 60px;
+        z-index: 50;
+        background: #111827;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        max-width: 210mm;
+        margin: 10px auto;
+        box-sizing: border-box;
+    }
+
+    @media print {
+        html, body {
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            background: #fff !important;
+            color: #111 !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+
+        .print-toolbar, .no-print, nav, .navbar, .btn-group, .alert { display: none !important; }
+
+        body > *, body .container, body .container-fluid, body main, body .content, body .content-wrapper {
+            max-width: none !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        .statement-page {
+            width: 100% !important;
+            max-width: 100% !important;
+            min-height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: 0 !important;
+            box-shadow: none !important;
+            background: #fff !important;
+        }
+
+        .summary-box { background: #fafafa !important; }
+
+        table.items tr { break-inside: avoid !important; page-break-inside: avoid !important; }
+        .sign-box { break-inside: avoid !important; }
+    }
+
+    @media screen and (max-width: 800px) {
+        .statement-page { margin: 10px 0; }
+        .print-toolbar { position: static; margin: 10px; flex-wrap: wrap; }
+    }
+</style>
+
+<div class="print-toolbar no-print">
+    <div>
+        <strong>Payment Statement</strong>
+        <span class="text-warning ms-2">{{ client.name }}</span>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'client_detail' client.pk %}" class="btn btn-outline-light btn-sm">← Back</a>
+        <button class="btn btn-info btn-sm" onclick="window.print()">Print / Save as PDF</button>
+    </div>
+</div>
+
+<div class="statement-page">
+    <div class="d-flex justify-content-between align-items-start pb-4 border-bottom mb-4">
+        <div class="d-flex gap-3 align-items-center">
+            <div class="company-logo">
+                <img src="{% static 'logo.png' %}" alt="Mengo Printers Logo">
+            </div>
+            <div>
+                <div style="font-weight:800; font-size:22px; letter-spacing: 0.5px;">MENGO PRINTERS</div>
+                <div style="font-size:13px; color:#555;">
+                    Office Address: 19 Partap Road, Backside Laxmi Cinema, Jalandhar City, Punjab, India - 144001<br>
+                    GSTIN: 24ABCDE1234F1Z5 &nbsp; | &nbsp; Phone: +91 9876151921 , 7087079290 &nbsp; &nbsp; Email: mengoprinters@gmail.com
+                </div>
+            </div>
+        </div>
+        <div class="text-end">
+            <div class="doc-title">PAYMENT RECEIVED</div>
+            <div class="doc-sub">
+                <strong>Statement Date:</strong> {{ today|date:"d / m / Y" }}<br>
+                <strong>Client Since:</strong> {{ client.created_at|date:"d / m / Y" }}
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div style="border:1px solid #e5e7eb; border-radius:8px; padding:14px 16px; height:100%; background:#fafafa;">
+                <div class="kv-label mb-1">Client</div>
+                <div class="kv-value mb-2">{{ client.name }}</div>
+                {% if client.company %}<div class="small text-muted">{{ client.company }}</div>{% endif %}
+                {% if client.gst_number %}<div class="small text-muted">GST: {{ client.gst_number }}</div>{% endif %}
+                {% if client.mobile_number %}<div class="small text-muted">Mobile: {{ client.mobile_number }}</div>{% endif %}
+                {% if client.address %}<div class="small text-muted mt-2">{{ client.address }}, {{ client.city|default:"" }} {{ client.pincode|default:"" }}</div>{% endif %}
+            </div>
+        </div>
+    </div>
+
+    <table class="table items mb-4">
+        <thead>
+            <tr>
+                <th style="width:5%">#</th>
+                <th style="width:14%">Date</th>
+                <th class="amount" style="width:16%">Amount (₹)</th>
+                <th style="width:14%">Mode</th>
+                <th style="width:18%">Reference</th>
+                <th style="width:19%">Notes</th>
+                <th style="width:14%">Received By</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for payment in payments %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ payment.payment_date|date:"d / m / Y" }}</td>
+                <td class="amount">₹{{ payment.amount|floatformat:2 }}</td>
+                <td>{{ payment.get_payment_mode_display }}</td>
+                <td>{{ payment.reference_number|default:"-" }}</td>
+                <td>{{ payment.notes|default:"-" }}</td>
+                <td>{{ payment.received_by.get_full_name|default:payment.received_by.username|default:"-" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" class="text-center text-muted" style="padding:16px;">No payments recorded for this client.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="2" class="text-end">TOTAL RECEIVED →</td>
+                <td class="amount" style="font-size:14px;">₹{{ total_received|floatformat:2 }}</td>
+                <td colspan="4"></td>
+            </tr>
+        </tfoot>
+    </table>
+
+    <div class="row">
+        <div class="col-md-7 ms-auto">
+            <div class="summary-box">
+                <div class="sum-row"><span class="label">Total Billable (all challans)</span><span class="value">₹{{ total_billable|floatformat:2 }}</span></div>
+                <div class="sum-row"><span class="label">Total Received</span><span class="value text-success">₹{{ total_received|floatformat:2 }}</span></div>
+                <div class="sum-row grand"><span class="label">Pending Amount</span><span class="value">₹{{ pending_amount|floatformat:2 }}</span></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="sign-box">
+        <strong>For MENGO PRINTERS</strong><br>
+        Authorised Signatory
+    </div>
+
+    <div class="text-center mt-5 text-muted" style="font-size:11px; border-top:1px dashed #ddd; padding-top:10px; margin-top:20px;">
+        This is a computer-generated Payment Statement.
+        Generated on {{ today|date:"d/m/Y" }} by {{ user.get_full_name|default:user.username }}.
+    </div>
+</div>
+{% endblock %}
